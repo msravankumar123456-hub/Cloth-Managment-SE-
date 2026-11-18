@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: loopmex
+    runtime: static
+    rootDir: cloth_app
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_SUPABASE_URL
+        value: https://bmcqjdbxbeiqksctllzh.supabase.co
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
