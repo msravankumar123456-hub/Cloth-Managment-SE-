@@ -14,5 +14,9 @@ export default defineConfig({
       interval: 1000,
       ignored: ['**/*.bat', '**/*.ps1', '**/.git/**'],
     },
+  },
+  preview: {
+    host: true,
+    allowedHosts: true,
   }
 });
