@@ -17,6 +17,11 @@ export default defineConfig({
   },
   preview: {
     host: true,
-    allowedHosts: true,
+    allowedHosts: [
+      'cloth-managment.onrender.com',
+      '.onrender.com',
+      'localhost',
+      '127.0.0.1',
+    ],
   }
 });
