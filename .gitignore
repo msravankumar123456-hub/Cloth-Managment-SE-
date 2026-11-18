@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Production builds
+dist/
+build/
+
+# Environment files / secrets — NEVER commit these
+.env
+.env.*
+!.env.example
+supabase/.env.factory-secrets
+!supabase/.env.factory-secrets.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+
+# Local-only helper (unreadable on this machine)
+setup-local-hosts.bat

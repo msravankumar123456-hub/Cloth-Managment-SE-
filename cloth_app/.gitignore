@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Production build
+dist/
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.*.local
+supabase/.env.factory-secrets
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
