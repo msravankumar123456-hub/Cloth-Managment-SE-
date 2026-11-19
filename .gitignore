@@ -22,5 +22,6 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/settings.json
 
-# Local-only helper (unreadable on this machine)
+# Local-only helpers (machine-specific paths)
 setup-local-hosts.bat
+start-loopmex.cmd
