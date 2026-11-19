@@ -216,6 +216,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           .eq('id', userObj.id)
           .maybeSingle();
 
+        if (!profile) {
+          setCurrentUser(null);
+          return;
+        }
+
         setCurrentUser({
           id: userObj.id,
           name: profile?.name || profile?.first_name || userObj.user_metadata?.name || userObj.user_metadata?.firstName || userObj.email?.split('@')[0] || 'Retailer',
@@ -405,11 +410,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       // Read retailer profile
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('retailers')
         .select('*')
         .eq('id', data.user.id)
         .maybeSingle();
+
+      if (profileError || !profile) {
+        await supabase.auth.signOut();
+        showToast('This account is not registered as a retailer.', 'error');
+        return false;
+      }
 
       const user: AuthUser = {
         id: data.user.id,
