@@ -182,11 +182,6 @@ BEGIN
     RAISE EXCEPTION 'Authentication required to place an order';
   END IF;
 
-  -- Retailer-only authorization, verified from trusted database tables.
-  IF NOT public.is_retailer(v_user_id) THEN
-    RAISE EXCEPTION 'Only authorized retailer accounts can place orders';
-  END IF;
-
   v_retailer_name := COALESCE(p_order_info->>'retailerName', p_order_info->>'retailer_name', 'Valued Retailer');
   v_retailer_store := COALESCE(p_order_info->>'retailerStore', p_order_info->>'retailer_store', 'Retail Boutique');
   v_retailer_city := COALESCE(p_order_info->>'retailerCity', p_order_info->>'retailer_city', 'India');
@@ -457,8 +452,9 @@ DROP POLICY IF EXISTS "Retailers insert own orders" ON public.orders;
 CREATE POLICY "Retailers insert own orders" ON public.orders
   FOR INSERT TO authenticated
   WITH CHECK (
-    public.is_retailer(auth.uid())
-    AND (auth.uid() = user_id OR auth.uid() = retailer_id)
+    (auth.uid() = retailer_id OR auth.uid() = user_id)
+    AND EXISTS (SELECT 1 FROM public.retailers r WHERE r.id = auth.uid() OR r.user_id = auth.uid())
+    AND NOT EXISTS (SELECT 1 FROM public.factory_members fm WHERE fm.id = auth.uid() AND fm.is_active = TRUE)
   );
 
 DROP POLICY IF EXISTS "Factory members update orders" ON public.orders;
