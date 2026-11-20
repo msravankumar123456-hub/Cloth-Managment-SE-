@@ -9,7 +9,7 @@ interface ProductDetailModalProps {
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClose }) => {
-  const { addToCart, setIsCartOpen } = useApp();
+  const { addToCart, setIsCartOpen, currentUser } = useApp();
 
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [sizes, setSizes] = useState<SizeBreakdown>({
@@ -36,6 +36,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
   }, [product]);
 
   if (!product) return null;
+
+  // Only verified retailer accounts may build a cart / place an order.
+  // Factory members and guests see a read-only stock sheet instead.
+  const canOrder = currentUser?.role === 'retailer';
 
   const totalQuantity = Object.values(sizes).reduce((a, b) => a + b, 0);
   const isMoqMet = totalQuantity >= product.moq;
@@ -75,7 +79,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
   };
 
   const handleAdd = () => {
-    if (!isMoqMet) return;
+    if (!canOrder || !isMoqMet) return;
 
     addToCart({
       id: `cart-${product.id}-${selectedColor}-${Date.now()}`,
@@ -195,107 +199,144 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                 </div>
               </div>
 
-              {/* Colorway Selection */}
-              <div className="mt-5">
-                <label className="text-xs font-mono uppercase tracking-wider text-[#A1A1AA] block mb-2 font-semibold">
-                  Select Colorway ({product.colors.length} options)
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {product.colors.map(col => (
-                    <button
-                      key={col}
-                      onClick={() => setSelectedColor(col)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-                        selectedColor === col
-                          ? 'bg-[#FF7135]/20 border-[#FF7135] text-white shadow-sm'
-                          : 'bg-[#101114] border-white/10 text-[#A1A1AA] hover:border-white/20'
-                      }`}
-                    >
-                      {col}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Size-wise Quantity Matrix */}
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-[#A1A1AA] font-semibold">
-                    Size-wise Quantity Breakdown (S to XXL)
+              {/* Colorway Selection — ordering control, retailers only */}
+              {canOrder && (
+                <div className="mt-5">
+                  <label className="text-xs font-mono uppercase tracking-wider text-[#A1A1AA] block mb-2 font-semibold">
+                    Select Colorway ({product.colors.length} options)
                   </label>
-
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-[#71717A]">Presets:</span>
-                    <button
-                      onClick={() => handleApplyPresetRatio('standard')}
-                      className="text-[11px] text-[#FF7135] hover:underline"
-                    >
-                      Standard MOQ Ratio
-                    </button>
-                    <span>•</span>
-                    <button
-                      onClick={() => handleApplyPresetRatio('large')}
-                      className="text-[11px] text-[#FF7135] hover:underline"
-                    >
-                      2x Carton Run
-                    </button>
+                  <div className="flex flex-wrap gap-2">
+                    {product.colors.map(col => (
+                      <button
+                        key={col}
+                        onClick={() => setSelectedColor(col)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                          selectedColor === col
+                            ? 'bg-[#FF7135]/20 border-[#FF7135] text-white shadow-sm'
+                            : 'bg-[#101114] border-white/10 text-[#A1A1AA] hover:border-white/20'
+                        }`}
+                      >
+                        {col}
+                      </button>
+                    ))}
                   </div>
                 </div>
+              )}
 
-                <div className="grid grid-cols-5 gap-2.5">
-                  {(['S', 'M', 'L', 'XL', 'XXL'] as const).map(sz => {
-                    const available = product.stock[sz];
-                    return (
+              {canOrder ? (
+                /* Size-wise Quantity Matrix — ordering control, retailers only */
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-mono uppercase tracking-wider text-[#A1A1AA] font-semibold">
+                      Size-wise Quantity Breakdown (S to XXL)
+                    </label>
+
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-[#71717A]">Presets:</span>
+                      <button
+                        onClick={() => handleApplyPresetRatio('standard')}
+                        className="text-[11px] text-[#FF7135] hover:underline"
+                      >
+                        Standard MOQ Ratio
+                      </button>
+                      <span>•</span>
+                      <button
+                        onClick={() => handleApplyPresetRatio('large')}
+                        className="text-[11px] text-[#FF7135] hover:underline"
+                      >
+                        2x Carton Run
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-5 gap-2.5">
+                    {(['S', 'M', 'L', 'XL', 'XXL'] as const).map(sz => {
+                      const available = product.stock[sz];
+                      return (
+                        <div key={sz} className="p-2.5 rounded-xl bg-[#101114] border border-white/10 text-center">
+                          <div className="text-xs font-bold text-[#FF7135]">{sz}</div>
+                          <input
+                            type="number"
+                            min="0"
+                            max={available}
+                            value={sizes[sz] || ''}
+                            onChange={(e) => handleSizeChange(sz, e.target.value)}
+                            placeholder="0"
+                            className="w-full text-center bg-[#17181C] border border-white/10 rounded-lg py-1.5 text-sm font-bold text-white mt-1.5 focus:outline-none focus:border-[#FF7135]"
+                          />
+                          <div className="text-[10px] text-[#71717A] mt-1 truncate">
+                            Stock: {available}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Validation Status */}
+                  <div className="mt-3 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5">
+                      {isMoqMet ? (
+                        <span className="text-emerald-400 flex items-center gap-1 font-medium">
+                          <Check className="w-3.5 h-3.5" />
+                          MOQ Requirement Met ({totalQuantity} / {product.moq} pcs)
+                        </span>
+                      ) : (
+                        <span className="text-amber-400 flex items-center gap-1 font-medium">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Add {product.moq - totalQuantity} more pcs to satisfy MOQ of {product.moq}
+                        </span>
+                      )}
+                    </div>
+
+                    <span className="font-mono text-white">
+                      Total: <strong>{totalQuantity} pieces</strong>
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                /* Read-only stock sheet for factory members / guests */
+                <div className="mt-6">
+                  <div className="mb-2 text-xs font-mono uppercase tracking-wider text-[#A1A1AA] font-semibold">
+                    Size-wise Available Stock (Read Only)
+                  </div>
+                  <div className="p-3 mb-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs flex items-start gap-2">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>
+                      Stock is shown for factory reference only. Ordering is restricted to authorized retailer accounts.
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-5 gap-2.5">
+                    {(['S', 'M', 'L', 'XL', 'XXL'] as const).map(sz => (
                       <div key={sz} className="p-2.5 rounded-xl bg-[#101114] border border-white/10 text-center">
                         <div className="text-xs font-bold text-[#FF7135]">{sz}</div>
-                        <input
-                          type="number"
-                          min="0"
-                          max={available}
-                          value={sizes[sz] || ''}
-                          onChange={(e) => handleSizeChange(sz, e.target.value)}
-                          placeholder="0"
-                          className="w-full text-center bg-[#17181C] border border-white/10 rounded-lg py-1.5 text-sm font-bold text-white mt-1.5 focus:outline-none focus:border-[#FF7135]"
-                        />
-                        <div className="text-[10px] text-[#71717A] mt-1 truncate">
-                          Stock: {available}
-                        </div>
+                        <div className="text-lg font-black text-white mt-1">{product.stock[sz]}</div>
+                        <div className="text-[10px] text-[#71717A] mt-0.5">pcs available</div>
                       </div>
-                    );
-                  })}
-                </div>
-
-                {/* Validation Status */}
-                <div className="mt-3 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5">
-                    {isMoqMet ? (
-                      <span className="text-emerald-400 flex items-center gap-1 font-medium">
-                        <Check className="w-3.5 h-3.5" />
-                        MOQ Requirement Met ({totalQuantity} / {product.moq} pcs)
-                      </span>
-                    ) : (
-                      <span className="text-amber-400 flex items-center gap-1 font-medium">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        Add {product.moq - totalQuantity} more pcs to satisfy MOQ of {product.moq}
-                      </span>
-                    )}
+                    ))}
                   </div>
-
-                  <span className="font-mono text-white">
-                    Total: <strong>{totalQuantity} pieces</strong>
-                  </span>
+                  <div className="mt-3 text-xs text-[#71717A]">
+                    Total ready stock:{' '}
+                    <strong className="text-emerald-400">
+                      {Object.values(product.stock).reduce((a, b) => a + b, 0)} pieces
+                    </strong>
+                  </div>
                 </div>
-              </div>
+              )}
 
             </div>
 
             {/* Bottom Action Footer */}
             <div className="pt-5 border-t border-white/[0.08] flex items-center justify-between gap-4">
               <div>
-                <div className="text-[10px] font-mono uppercase tracking-wider text-[#71717A]">Order Line Subtotal</div>
-                <div className="text-xl font-black text-white">
-                  ₹{totalPrice.toLocaleString()}
+                <div className="text-[10px] font-mono uppercase tracking-wider text-[#71717A]">
+                  {canOrder ? 'Order Line Subtotal' : 'Reference Line Value'}
                 </div>
+                <div className="text-xl font-black text-white">
+                  ₹{(canOrder ? totalPrice : product.wholesalePrice * product.moq).toLocaleString()}
+                </div>
+                {!canOrder && (
+                  <div className="text-[10px] text-[#71717A] mt-0.5">at standard MOQ of {product.moq} pcs</div>
+                )}
               </div>
 
               <div className="flex items-center gap-3">
@@ -306,18 +347,20 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                   Cancel
                 </button>
 
-                <button
-                  onClick={handleAdd}
-                  disabled={!isMoqMet}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-xs tracking-wide uppercase transition-all duration-200 cursor-pointer ${
-                    isMoqMet
-                      ? 'bg-[#FF7135] hover:bg-[#FF5C1B] text-white shadow-xl shadow-[#FF7135]/30'
-                      : 'bg-white/10 text-[#71717A] cursor-not-allowed opacity-50'
-                  }`}
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Bulk Order</span>
-                </button>
+                {canOrder && (
+                  <button
+                    onClick={handleAdd}
+                    disabled={!isMoqMet}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-xs tracking-wide uppercase transition-all duration-200 cursor-pointer ${
+                      isMoqMet
+                        ? 'bg-[#FF7135] hover:bg-[#FF5C1B] text-white shadow-xl shadow-[#FF7135]/30'
+                        : 'bg-white/10 text-[#71717A] cursor-not-allowed opacity-50'
+                    }`}
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Add to Bulk Order</span>
+                  </button>
+                )}
               </div>
             </div>
 

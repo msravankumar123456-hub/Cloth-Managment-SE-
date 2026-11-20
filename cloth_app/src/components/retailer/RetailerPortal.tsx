@@ -14,7 +14,8 @@ import {
   Package, 
   Truck,
   CheckCircle2,
-  Check
+  Check,
+  ShieldCheck
 } from 'lucide-react';
 import { ProductDetailModal } from './ProductDetailModal';
 import { CartDrawer } from './CartDrawer';
@@ -41,6 +42,10 @@ export const RetailerPortal: React.FC = () => {
     logout,
     isDatabaseConnected
   } = useApp();
+
+  // Factory members may browse the catalogue to inspect live stock, but all
+  // purchasing controls are hidden. Only retailers can order.
+  const canOrder = currentUser?.role === 'retailer';
 
   const [activeTab, setActiveTab] = useState<'catalog' | 'orders' | 'invoices'>('catalog');
   const [selectedCategory, setSelectedCategory] = useState<ClothingCategory | 'All'>('All');
@@ -124,6 +129,15 @@ export const RetailerPortal: React.FC = () => {
               </button>
             </div>
 
+            {!canOrder && (
+              <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Read-only stock view.</strong> Factory accounts can check available inventory but cannot add items to cart, check out, or place orders. Only authorized retailer accounts can purchase.
+                </span>
+              </div>
+            )}
+
             {/* Quick Switch Tabs */}
             <div className="flex items-center gap-2">
               <div className="flex items-center p-1 rounded-xl bg-[#17181C] border border-white/10 text-xs">
@@ -138,39 +152,45 @@ export const RetailerPortal: React.FC = () => {
                   Catalogue ({products.length})
                 </button>
 
-                <button
-                  onClick={() => setActiveTab('orders')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                    activeTab === 'orders'
-                      ? 'bg-[#FF7135] text-white font-semibold shadow-sm'
-                      : 'text-[#A1A1AA] hover:text-white'
-                  }`}
-                >
-                  <Package className="w-3.5 h-3.5" />
-                  <span>My Orders ({visibleOrders.length})</span>
-                </button>
+                {canOrder && (
+                  <>
+                    <button
+                      onClick={() => setActiveTab('orders')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                        activeTab === 'orders'
+                          ? 'bg-[#FF7135] text-white font-semibold shadow-sm'
+                          : 'text-[#A1A1AA] hover:text-white'
+                      }`}
+                    >
+                      <Package className="w-3.5 h-3.5" />
+                      <span>My Orders ({visibleOrders.length})</span>
+                    </button>
 
-                <button
-                  onClick={() => setActiveTab('invoices')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                    activeTab === 'invoices'
-                      ? 'bg-[#FF7135] text-white font-semibold shadow-sm'
-                      : 'text-[#A1A1AA] hover:text-white'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Invoices ({visibleInvoices.length})</span>
-                </button>
+                    <button
+                      onClick={() => setActiveTab('invoices')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                        activeTab === 'invoices'
+                          ? 'bg-[#FF7135] text-white font-semibold shadow-sm'
+                          : 'text-[#A1A1AA] hover:text-white'
+                      }`}
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Invoices ({visibleInvoices.length})</span>
+                    </button>
+                  </>
+                )}
               </div>
 
-              {/* Cart Drawer Button */}
-              <button
-                onClick={() => setIsCartOpen(true)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#17181C] hover:bg-[#1F2025] border border-white/10 text-xs font-semibold text-white transition-all shadow-sm"
-              >
-                <ShoppingBag className="w-4 h-4 text-[#FF7135]" />
-                <span>Cart ({totalCartPieces})</span>
-              </button>
+              {/* Cart Drawer Button — retailers only */}
+              {canOrder && (
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#17181C] hover:bg-[#1F2025] border border-white/10 text-xs font-semibold text-white transition-all shadow-sm"
+                >
+                  <ShoppingBag className="w-4 h-4 text-[#FF7135]" />
+                  <span>Cart ({totalCartPieces})</span>
+                </button>
+              )}
             </div>
           </div>
 

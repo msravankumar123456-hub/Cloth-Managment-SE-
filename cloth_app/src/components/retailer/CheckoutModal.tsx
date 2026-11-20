@@ -45,12 +45,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, o
 
   if (!isOpen) return null;
 
+  // Hard UI gate: no checkout for factory members or guests, even if the modal
+  // is opened through direct navigation or a stale cart.
+  const canCheckout = currentUser?.role === 'retailer';
+
   const totalPieces = cart.reduce((sum, item) => sum + item.totalQuantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.itemTotal, 0);
   const gstAmount = Math.round(subtotal * 0.05);
   const grandTotal = subtotal + gstAmount;
 
   const handleSimulatePayment = async (forceResult: 'success' | 'failure') => {
+    if (!canCheckout) {
+      setSimulationResult('failure');
+      setErrorMessage('Only authorized retailer accounts can place orders.');
+      return;
+    }
+
     setIsProcessing(true);
     setSimulationResult(null);
     setErrorMessage('');
@@ -81,6 +91,31 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, o
       setErrorMessage(error instanceof Error ? error.message : 'Unable to place the order. Please try again.');
     }
   };
+
+  if (!canCheckout) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+        <div
+          className="relative w-full max-w-md rounded-2xl bg-[#17181C] border border-amber-500/30 shadow-2xl shadow-black/95 text-[#F5F5F5] p-6 space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-2 text-amber-300">
+            <ShieldCheck className="w-5 h-5" />
+            <h3 className="text-lg font-bold">Checkout Restricted</h3>
+          </div>
+          <p className="text-sm text-[#A1A1AA] leading-relaxed">
+            Only authorized retailer accounts can place orders. Factory owners, admins, partners and staff cannot purchase products.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-sm text-white font-medium transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in">

@@ -678,7 +678,11 @@ CREATE POLICY "Retailers view own orders" ON public.orders
 DROP POLICY IF EXISTS "Retailers insert own orders" ON public.orders;
 CREATE POLICY "Retailers insert own orders" ON public.orders
   FOR INSERT TO authenticated
-  WITH CHECK (auth.uid() = retailer_id OR auth.uid() = user_id OR public.is_factory_member());
+  WITH CHECK (
+    (auth.uid() = retailer_id OR auth.uid() = user_id)
+    AND EXISTS (SELECT 1 FROM public.retailers r WHERE r.id = auth.uid() OR r.user_id = auth.uid())
+    AND NOT EXISTS (SELECT 1 FROM public.factory_members fm WHERE fm.id = auth.uid() AND fm.is_active = TRUE)
+  );
 
 DROP POLICY IF EXISTS "Factory members update orders" ON public.orders;
 CREATE POLICY "Factory members update orders" ON public.orders

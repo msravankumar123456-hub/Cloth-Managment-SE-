@@ -7,6 +7,9 @@ export const TopNav: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Cart / checkout entry points are hidden for factory members and guests.
+  const canOrder = currentUser?.role === 'retailer';
+
   const totalCartCount = cart.reduce((acc, item) => acc + item.totalQuantity, 0);
 
   useEffect(() => {
@@ -97,20 +100,22 @@ export const TopNav: React.FC = () => {
 
           {/* Right Section: Cart & Primary CTAs */}
           <div className="hidden lg:flex items-center gap-3">
-            {/* Shopping Cart Trigger */}
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2 rounded-xl bg-[#17181C] border border-white/[0.08] hover:border-white/20 text-[#A1A1AA] hover:text-white transition-all"
-              title="View Bulk Cart"
-              aria-label="View Cart"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              {totalCartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF7135] text-white text-[10px] font-bold flex items-center justify-center">
-                  {totalCartCount > 99 ? '99+' : totalCartCount}
-                </span>
-              )}
-            </button>
+            {/* Shopping Cart Trigger — retailers only */}
+            {canOrder && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 rounded-xl bg-[#17181C] border border-white/[0.08] hover:border-white/20 text-[#A1A1AA] hover:text-white transition-all"
+                title="View Bulk Cart"
+                aria-label="View Cart"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                {totalCartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF7135] text-white text-[10px] font-bold flex items-center justify-center">
+                    {totalCartCount > 99 ? '99+' : totalCartCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* Sign In / Account */}
             {isAuthenticated && currentUser ? (
@@ -159,18 +164,20 @@ export const TopNav: React.FC = () => {
 
           {/* Mobile Actions: Cart & Menu Hamburger */}
           <div className="flex lg:hidden items-center gap-2">
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2 rounded-lg bg-[#17181C] border border-white/10 text-[#A1A1AA]"
-              aria-label="Cart"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              {totalCartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF7135] text-white text-[10px] font-bold flex items-center justify-center">
-                  {totalCartCount}
-                </span>
-              )}
-            </button>
+            {canOrder && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 rounded-lg bg-[#17181C] border border-white/10 text-[#A1A1AA]"
+                aria-label="Cart"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                {totalCartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF7135] text-white text-[10px] font-bold flex items-center justify-center">
+                    {totalCartCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

@@ -9,9 +9,12 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, onOpenCheckout }) => {
-  const { cart, removeFromCart, setCurrentView } = useApp();
+  const { cart, removeFromCart, setCurrentView, currentUser } = useApp();
 
   if (!isOpen) return null;
+
+  // Checkout is a retailer-only capability.
+  const canCheckout = currentUser?.role === 'retailer';
 
   const totalPieces = cart.reduce((sum, item) => sum + item.totalQuantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.itemTotal, 0);
@@ -146,16 +149,25 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, onOpenC
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                onClose();
-                onOpenCheckout();
-              }}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#FF7135] hover:bg-[#FF5C1B] text-white font-semibold text-xs tracking-wider uppercase shadow-xl shadow-[#FF7135]/25 hover:shadow-[#FF7135]/40 transition-all cursor-pointer"
-            >
-              <span>Proceed to B2B Checkout</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            {canCheckout ? (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenCheckout();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#FF7135] hover:bg-[#FF5C1B] text-white font-semibold text-xs tracking-wider uppercase shadow-xl shadow-[#FF7135]/25 hover:shadow-[#FF7135]/40 transition-all cursor-pointer"
+              >
+                <span>Proceed to B2B Checkout</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                  Checkout is available to retailer accounts only. Factory members can view stock but cannot place orders.
+                </span>
+              </div>
+            )}
           </div>
         )}
 

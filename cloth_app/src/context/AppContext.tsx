@@ -695,6 +695,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Cart Actions (Client-side)
   const addToCart = (newItem: CartItem) => {
+    // Ordering is a retailer-only capability. Factory owners/admins/partners/
+    // staff may inspect stock but must never add purchasable lines to a cart.
+    if (currentUser?.role !== 'retailer') {
+      showToast('Only retailer accounts can add products to an order.', 'error');
+      return;
+    }
+
     setCart(prev => {
       const existingIdx = prev.findIndex(item => 
         item.product.id === newItem.product.id && item.selectedColor === newItem.selectedColor
@@ -760,6 +767,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }): Promise<Order> => {
     if (!currentUser) {
       const msg = 'Please sign in to place an order.';
+      showToast(msg, 'error');
+      throw new Error(msg);
+    }
+    // Defence in depth: the RPC also verifies this against the database.
+    if (currentUser.role !== 'retailer') {
+      const msg = 'Only retailer accounts can place orders.';
       showToast(msg, 'error');
       throw new Error(msg);
     }
