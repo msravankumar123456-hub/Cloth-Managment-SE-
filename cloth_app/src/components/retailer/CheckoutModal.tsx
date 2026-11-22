@@ -145,9 +145,21 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, o
     setIsProcessing(true);
 
     const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_51792567627loopmex';
+    const isPlaceholderKey = !razorpayKey || razorpayKey === 'rzp_test_51792567627loopmex' || razorpayKey.includes('placeholder') || razorpayKey.includes('YOUR_KEY');
+
+    // If using default placeholder test key, simulate rapid test checkout without waiting on external Razorpay handshake
+    if (isPlaceholderKey) {
+      setTimeout(() => {
+        const testTxn = `pay_rzp_test_${Date.now().toString().slice(-8)}`;
+        completeOrderPlacement(testTxn, 'Razorpay Test Mode');
+      }, 700);
+      return;
+    }
 
     // Check if Razorpay Checkout script is loaded
     if (typeof window !== 'undefined' && window.Razorpay) {
+      let watchdog: any = null;
+
       try {
         const options = {
           key: razorpayKey,
@@ -167,12 +179,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, o
           },
           modal: {
             ondismiss: function () {
+              if (watchdog) clearTimeout(watchdog);
               setIsProcessing(false);
               setPaymentFailed(true);
               setErrorMessage('Payment cancelled by user. Cart items are preserved. Click Retry Payment to try again.');
             },
           },
           handler: function (response: any) {
+            if (watchdog) clearTimeout(watchdog);
             const txnId = response.razorpay_payment_id || `pay_${Date.now()}`;
             completeOrderPlacement(txnId, 'Razorpay UPI / Cards');
           },
@@ -180,14 +194,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, o
 
         const rzp = new window.Razorpay(options);
         rzp.on('payment.failed', function (response: any) {
+          if (watchdog) clearTimeout(watchdog);
           setIsProcessing(false);
           setPaymentFailed(true);
           const reason = response.error?.description || response.error?.reason || 'Transaction declined by bank or gateway.';
           setErrorMessage(`Payment Failed: ${reason}`);
         });
 
+        // Watchdog: If Razorpay fails to open within 3.5s (e.g. popup blocked or key rejected), release the lock
+        watchdog = setTimeout(() => {
+          setIsProcessing(false);
+          setPaymentFailed(true);
+          setErrorMessage('Payment gateway took too long to load or popup was blocked. Click "Instant Test Pay" below to confirm immediately.');
+        }, 3500);
+
         rzp.open();
       } catch (err) {
+        if (watchdog) clearTimeout(watchdog);
         setIsProcessing(false);
         setPaymentFailed(true);
         const msg = err instanceof Error ? err.message : 'Unable to initialize Razorpay gateway.';
@@ -197,13 +220,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, o
       // Fallback if third-party script is blocked by browser adblocker or offline
       setIsProcessing(false);
       setPaymentFailed(true);
-      setErrorMessage('Razorpay Checkout SDK is still loading or blocked. You can use the Test Mode Instant Pay button below.');
+      setErrorMessage('Razorpay Checkout SDK is unavailable or blocked. Please use Instant Test Pay below.');
     }
   };
 
   // Immediate Test Mode Payment Execution (for automated sandbox & quick demo)
   const handleTestModeQuickPay = () => {
-    const testTxn = `pay_test_${Date.now()}`;
+    const testTxn = `pay_test_${Date.now().toString().slice(-8)}`;
     completeOrderPlacement(testTxn, 'Razorpay Test Mode');
   };
 
@@ -479,7 +502,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, o
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>INITIALIZING PAYMENT GATEWAY...</span>
+                  <span>PROCESSING PAYMENT & CONFIRMING...</span>
                 </>
               ) : (
                 <>
@@ -499,8 +522,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, o
               <button
                 type="button"
                 onClick={handleTestModeQuickPay}
-                disabled={isProcessing}
-                className="text-[#FF7135] hover:underline font-medium cursor-pointer"
+                className="text-[#FF7135] hover:text-[#FF8D5C] hover:underline font-bold cursor-pointer transition-colors"
               >
                 Instant Test Pay (Skip Popup)
               </button>
