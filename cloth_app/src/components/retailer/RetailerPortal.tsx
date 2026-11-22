@@ -21,6 +21,7 @@ import { ProductDetailModal } from './ProductDetailModal';
 import { CartDrawer } from './CartDrawer';
 import { CheckoutModal } from './CheckoutModal';
 import { OrderTrackingModal } from './OrderTrackingModal';
+import { OrderConfirmationModal } from './OrderConfirmationModal';
 import { InvoicesView } from './InvoicesView';
 
 export const RetailerPortal: React.FC = () => {
@@ -53,9 +54,18 @@ export const RetailerPortal: React.FC = () => {
   const [selectedFabric, setSelectedFabric] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'recommended' | 'price-asc' | 'price-desc' | 'moq-asc'>('recommended');
   
-  // Checkout modal
+  // Checkout modal & Order Confirmation state
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [lastPlacedOrder, setLastPlacedOrder] = useState<Order | null>(null);
+  const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('loopmex_last_confirmed_order');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
   const categories: (ClothingCategory | 'All')[] = [
     'All',
@@ -90,10 +100,18 @@ export const RetailerPortal: React.FC = () => {
 
   const totalCartPieces = cart.reduce((acc, item) => acc + item.totalQuantity, 0);
   const visibleOrders = currentUser?.role === 'retailer'
-    ? orders.filter(order => order.retailerName.toLowerCase() === currentUser.name.toLowerCase())
+    ? orders.filter(order => 
+        (order.retailerName && currentUser.name && order.retailerName.toLowerCase() === currentUser.name.toLowerCase()) ||
+        (order as any).user_id === currentUser.id ||
+        (order as any).retailer_id === currentUser.id
+      )
     : orders;
   const visibleInvoices = currentUser?.role === 'retailer'
-    ? invoices.filter(invoice => invoice.retailerName.toLowerCase() === currentUser.name.toLowerCase())
+    ? invoices.filter(invoice => 
+        (invoice.retailerName && currentUser.name && invoice.retailerName.toLowerCase() === currentUser.name.toLowerCase()) ||
+        (invoice as any).user_id === currentUser.id ||
+        (invoice as any).retailer_id === currentUser.id
+      )
     : invoices;
 
   return (
@@ -539,8 +557,24 @@ export const RetailerPortal: React.FC = () => {
         onOrderSuccess={(order) => {
           setIsCheckoutOpen(false);
           setLastPlacedOrder(order);
+          setConfirmedOrder(order);
+          try {
+            sessionStorage.setItem('loopmex_last_confirmed_order', JSON.stringify(order));
+          } catch {}
+          setIsConfirmationOpen(true);
+        }}
+      />
+
+      <OrderConfirmationModal
+        order={confirmedOrder}
+        isOpen={isConfirmationOpen}
+        onClose={() => setIsConfirmationOpen(false)}
+        onViewMyOrders={() => {
+          setIsConfirmationOpen(false);
           setActiveTab('orders');
-          setTrackingOrder(order);
+          if (confirmedOrder) {
+            setTrackingOrder(confirmedOrder);
+          }
         }}
       />
 

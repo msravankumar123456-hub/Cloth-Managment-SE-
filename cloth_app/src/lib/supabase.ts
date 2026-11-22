@@ -81,6 +81,7 @@ export const mapDbOrderToApp = (db: any): Order => ({
   retailerStore: db.retailer_store ?? db.retailerStore,
   retailerCity: db.retailer_city ?? db.retailerCity,
   retailerPhone: db.retailer_phone ?? db.retailerPhone,
+  shippingAddress: db.shipping_address ?? db.shippingAddress ?? '',
   items: typeof db.items === 'string' ? JSON.parse(db.items) : (db.items || []),
   totalPieces: db.total_pieces ?? db.totalPieces ?? 0,
   subtotal: db.subtotal ?? 0,
@@ -93,7 +94,10 @@ export const mapDbOrderToApp = (db: any): Order => ({
   estimatedDelivery: db.estimated_delivery ?? db.estimatedDelivery,
   paymentMethod: db.payment_method ?? db.paymentMethod,
   paymentStatus: db.payment_status ?? db.paymentStatus ?? 'Paid',
+  transactionId: db.transaction_id ?? db.transactionId ?? '',
+  paidAt: db.paid_at ?? db.paidAt,
   notes: db.notes,
+  createdAt: db.created_at ?? db.createdAt,
 });
 
 export const mapAppOrderToDb = (o: Order) => ({
@@ -104,6 +108,7 @@ export const mapAppOrderToDb = (o: Order) => ({
   retailer_store: o.retailerStore,
   retailer_city: o.retailerCity,
   retailer_phone: o.retailerPhone,
+  shipping_address: o.shippingAddress || null,
   items: o.items,
   total_pieces: o.totalPieces,
   subtotal: o.subtotal,
@@ -116,6 +121,8 @@ export const mapAppOrderToDb = (o: Order) => ({
   estimated_delivery: o.estimatedDelivery,
   payment_method: o.paymentMethod,
   payment_status: o.paymentStatus,
+  transaction_id: o.transactionId || null,
+  paid_at: o.paidAt || null,
   notes: o.notes || null,
 });
 

@@ -28,8 +28,10 @@ import { AdminAuth } from './components/shared/AdminAuth';
 import { ProductDetailModal } from './components/retailer/ProductDetailModal';
 import { CartDrawer } from './components/retailer/CartDrawer';
 import { CheckoutModal } from './components/retailer/CheckoutModal';
+import { OrderConfirmationModal } from './components/retailer/OrderConfirmationModal';
 import { OrderTrackingModal } from './components/retailer/OrderTrackingModal';
 import { InvoicesView } from './components/retailer/InvoicesView';
+import { Order } from './types';
 
 export const App: React.FC = () => {
   const { 
@@ -46,6 +48,8 @@ export const App: React.FC = () => {
   } = useApp();
 
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
+  const [confirmedOrder, setConfirmedOrder] = React.useState<Order | null>(null);
+  const [isConfirmationOpen, setIsConfirmationOpen] = React.useState(false);
 
   return (
     <div className="min-h-screen bg-[#101114] text-[#F5F5F5] font-sans antialiased selection:bg-[#FF7135]/30 selection:text-white">
@@ -83,8 +87,21 @@ export const App: React.FC = () => {
               onClose={() => setIsCheckoutOpen(false)}
               onOrderSuccess={(order) => {
                 setIsCheckoutOpen(false);
+                setConfirmedOrder(order);
+                setIsConfirmationOpen(true);
+              }}
+            />
+
+            <OrderConfirmationModal
+              order={confirmedOrder}
+              isOpen={isConfirmationOpen}
+              onClose={() => setIsConfirmationOpen(false)}
+              onViewMyOrders={() => {
+                setIsConfirmationOpen(false);
                 setCurrentView('retailer');
-                setTrackingOrder(order);
+                if (confirmedOrder) {
+                  setTrackingOrder(confirmedOrder);
+                }
               }}
             />
 

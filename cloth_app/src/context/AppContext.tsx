@@ -72,7 +72,10 @@ interface AppContextType {
     retailerStore: string;
     retailerCity: string;
     retailerPhone: string;
-    paymentMethod: 'UPI' | 'NEFT / RTGS' | 'Factory Credit (15 Days)';
+    shippingAddress?: string;
+    paymentMethod: 'Razorpay UPI / Cards' | 'UPI' | 'NEFT / RTGS' | 'Factory Credit (15 Days)' | string;
+    paymentStatus?: 'Paid' | 'Pending';
+    transactionId?: string;
   }) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
   retailers: Retailer[];
@@ -875,7 +878,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     retailerStore: string;
     retailerCity: string;
     retailerPhone: string;
-    paymentMethod: 'UPI' | 'NEFT / RTGS' | 'Factory Credit (15 Days)';
+    shippingAddress?: string;
+    paymentMethod: 'Razorpay UPI / Cards' | 'UPI' | 'NEFT / RTGS' | 'Factory Credit (15 Days)' | string;
+    paymentStatus?: 'Paid' | 'Pending';
+    transactionId?: string;
   }): Promise<Order> => {
     if (!currentUser) {
       const msg = 'Please sign in to place an order.';
@@ -906,7 +912,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           retailerStore: orderInfo.retailerStore,
           retailerCity: orderInfo.retailerCity,
           retailerPhone: orderInfo.retailerPhone,
+          shippingAddress: orderInfo.shippingAddress || '',
           paymentMethod: orderInfo.paymentMethod,
+          paymentStatus: orderInfo.paymentStatus || 'Paid',
+          transactionId: orderInfo.transactionId || '',
         },
         p_items: cart,
       });
@@ -916,6 +925,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const createdOrder = mapDbOrderToApp(data);
+      // Ensure provided delivery and payment info are populated if RPC return is partial
+      if (orderInfo.shippingAddress && !createdOrder.shippingAddress) {
+        createdOrder.shippingAddress = orderInfo.shippingAddress;
+      }
+      if (orderInfo.transactionId && !createdOrder.transactionId) {
+        createdOrder.transactionId = orderInfo.transactionId;
+      }
+      if (orderInfo.paymentStatus) {
+        createdOrder.paymentStatus = orderInfo.paymentStatus;
+      }
+
+      // Record in payments table if transactionId provided
+      if (createdOrder.id && orderInfo.transactionId) {
+        try {
+          await supabase.from('payments').insert({
+            id: `pay-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            order_id: createdOrder.id,
+            amount: createdOrder.grandTotal,
+            method: orderInfo.paymentMethod,
+            status: orderInfo.paymentStatus || 'Paid',
+            transaction_id: orderInfo.transactionId,
+            paid_at: new Date().toISOString(),
+          });
+        } catch (payLogErr) {
+          console.warn('Payment logging:', payLogErr);
+        }
+      }
+
       setOrders(prev => [createdOrder, ...prev]);
       clearCart();
       showToast(`Order ${createdOrder.orderNumber} placed successfully!`, 'success');

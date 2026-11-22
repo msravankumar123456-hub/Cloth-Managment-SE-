@@ -60,6 +60,7 @@ export interface Order {
   retailerStore: string;
   retailerCity: string;
   retailerPhone: string;
+  shippingAddress?: string;
   items: CartItem[];
   totalPieces: number;
   subtotal: number;
@@ -70,9 +71,12 @@ export interface Order {
   courierName: string;
   dispatchDate?: string;
   estimatedDelivery: string;
-  paymentMethod: 'UPI' | 'NEFT / RTGS' | 'Factory Credit (15 Days)';
+  paymentMethod: 'Razorpay UPI / Cards' | 'UPI' | 'NEFT / RTGS' | 'Factory Credit (15 Days)' | string;
   paymentStatus: 'Paid' | 'Pending';
+  transactionId?: string;
+  paidAt?: string;
   notes?: string;
+  createdAt?: string;
 }
 
 export interface Retailer {

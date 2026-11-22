@@ -79,6 +79,9 @@ export const AdminOrderDetailModal: React.FC<AdminOrderDetailModalProps> = ({ or
               <div className="text-[#A1A1AA] flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-[#FF7135]" /> {order.retailerCity}
               </div>
+              {order.shippingAddress && (
+                <div className="text-[11px] text-[#71717A] pl-5">{order.shippingAddress}</div>
+              )}
               <div className="text-[#A1A1AA] flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-[#FF7135]" /> {order.retailerPhone || '—'}
               </div>
@@ -88,6 +91,9 @@ export const AdminOrderDetailModal: React.FC<AdminOrderDetailModalProps> = ({ or
               <div className="text-white flex items-center gap-1.5">
                 <CreditCard className="w-3.5 h-3.5 text-[#FF7135]" /> {order.paymentMethod}
               </div>
+              {order.transactionId && (
+                <div className="text-[10px] font-mono text-[#71717A]">TXN: <span className="text-white">{order.transactionId}</span></div>
+              )}
               <div className="text-[10px] font-mono uppercase tracking-wider text-[#71717A] pt-2">Logistics</div>
               <div className="text-white flex items-center gap-1.5">
                 <Truck className="w-3.5 h-3.5 text-[#FF7135]" /> {order.courierName}
