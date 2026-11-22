@@ -657,22 +657,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     rating: 4.8,
     gsm: 195,
   },
-  {
-    id: 'prod-41',
-    name: 'Powerlook Corduroy Check Tartan Long Sleeves Shirt',
-    category: 'Shirts',
-    fabric: '100% Fine Wale Cotton Corduroy Tartan',
-    description: 'Heavyweight corduroy tartan check overshirt for men with cutaway collar, horn buttons, and curved hem.',
-    wholesalePrice: 480,
-    retailMrp: 2199,
-    moq: 25,
-    image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1000&q=80',
-    stock: { S: 65, M: 140, L: 160, XL: 95, XXL: 40 },
-    colors: ['Brown Tartan', 'Earth Ochre'],
-    tags: ['Corduroy Check', 'Autumn Drop'],
-    rating: 4.9,
-    gsm: 250,
-  },
   // ── 4 Amazon Kurtis & Silk Ethnic Ensembles ──
   {
     id: 'prod-42',
