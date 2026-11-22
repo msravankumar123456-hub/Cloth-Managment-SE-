@@ -4,6 +4,7 @@ import { TopNav } from './components/shared/TopNav';
 import { Toast } from './components/shared/Toast';
 
 // Landing Page Components
+import { FashionLanding } from './components/landing/FashionLanding';
 import { Hero } from './components/landing/Hero';
 import { TrustStrip } from './components/landing/TrustStrip';
 import { FeaturedCollection } from './components/landing/FeaturedCollection';
@@ -55,8 +56,8 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#101114] text-[#F5F5F5] font-sans antialiased selection:bg-[#FF7135]/30 selection:text-white">
-      {/* Universal Floating Navigation Bar */}
-      <TopNav />
+      {/* Universal Floating Navigation Bar (hidden on the new fashion landing) */}
+      {currentView !== 'landing' && <TopNav />}
 
       {/* Main Content Area Based on Current View */}
       <main>
@@ -117,11 +118,7 @@ export const App: React.FC = () => {
         ) : (
           currentView === 'landing' && (
             <>
-              <Hero />
-              <TrustStrip />
-              <FeaturedCollection />
-              <AccessPortals />
-              <Footer />
+              <FashionLanding />
 
               {/* Modals triggered from landing page */}
               <CartDrawer
