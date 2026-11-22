@@ -33,6 +33,9 @@ export const mapDbProductToApp = (db: any): Product => ({
   retailMrp: db.retail_mrp,
   moq: db.moq || 30,
   image: db.image,
+  images: Array.isArray(db.images) && db.images.length > 0 
+    ? db.images 
+    : [db.image],
   stock: {
     S: db.stock_s ?? 0,
     M: db.stock_m ?? 0,
@@ -43,6 +46,9 @@ export const mapDbProductToApp = (db: any): Product => ({
   colors: db.colors || [],
   tags: db.tags || [],
   rating: Number(db.rating) || 4.8,
+  reviewsCount: db.reviews_count ?? (80 + Math.abs(parseInt(db.id?.replace(/\D/g, '') || '12', 10) % 150)),
+  sku: db.sku || `LPM-${(db.category || 'APP').slice(0, 3).toUpperCase()}-${(db.id || '001').slice(-4).toUpperCase()}`,
+  modelInfo: db.model_info || "Model is 6'1\" (185 cm) wearing size L (Chest 40\")",
   isFeatured: Boolean(db.is_featured),
   gsm: db.gsm,
 });

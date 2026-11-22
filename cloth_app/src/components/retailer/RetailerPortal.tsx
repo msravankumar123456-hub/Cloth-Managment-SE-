@@ -18,6 +18,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { ProductDetailModal } from './ProductDetailModal';
+import { ProductDetailPage } from '../product/ProductDetailPage';
 import { CartDrawer } from './CartDrawer';
 import { CheckoutModal } from './CheckoutModal';
 import { OrderTrackingModal } from './OrderTrackingModal';
@@ -113,6 +114,65 @@ export const RetailerPortal: React.FC = () => {
         (invoice as any).retailer_id === currentUser.id
       )
     : invoices;
+
+  // Render Full Professional Product Details Page when a product is selected
+  if (selectedProductForDetail) {
+    return (
+      <>
+        <ProductDetailPage
+          product={selectedProductForDetail}
+          onBack={() => setSelectedProductForDetail(null)}
+          onBuyNow={() => {
+            setSelectedProductForDetail(null);
+            setIsCheckoutOpen(true);
+          }}
+        />
+
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          onOpenCheckout={() => setIsCheckoutOpen(true)}
+        />
+
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          onOrderSuccess={(order) => {
+            setIsCheckoutOpen(false);
+            setLastPlacedOrder(order);
+            setConfirmedOrder(order);
+            try {
+              sessionStorage.setItem('loopmex_last_confirmed_order', JSON.stringify(order));
+            } catch {}
+            setIsConfirmationOpen(true);
+          }}
+        />
+
+        <OrderConfirmationModal
+          order={confirmedOrder}
+          isOpen={isConfirmationOpen}
+          onClose={() => setIsConfirmationOpen(false)}
+          onViewMyOrders={() => {
+            setIsConfirmationOpen(false);
+            setActiveTab('orders');
+            if (confirmedOrder) {
+              setTrackingOrder(confirmedOrder);
+            }
+          }}
+        />
+
+        <OrderTrackingModal
+          order={trackingOrder}
+          onClose={() => setTrackingOrder(null)}
+        />
+
+        <InvoicesView
+          invoice={activeInvoice}
+          onClose={() => setActiveInvoice(null)}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#101114] text-[#F5F5F5] pt-24 pb-20">

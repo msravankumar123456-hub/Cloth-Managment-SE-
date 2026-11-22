@@ -18,12 +18,16 @@ export interface Product {
   retailMrp: number;
   moq: number; // Minimum Order Quantity in pieces
   image: string;
+  images?: string[];
   stock: SizeBreakdown;
   colors: string[];
   tags: string[];
   rating: number;
+  reviewsCount?: number;
   isFeatured?: boolean;
   gsm?: number; // Fabric GSM
+  sku?: string;
+  modelInfo?: string;
 }
 
 export interface CartItem {

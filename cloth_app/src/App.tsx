@@ -26,6 +26,7 @@ import { AdminAuth } from './components/shared/AdminAuth';
 
 // Modals on Landing Page
 import { ProductDetailModal } from './components/retailer/ProductDetailModal';
+import { ProductDetailPage } from './components/product/ProductDetailPage';
 import { CartDrawer } from './components/retailer/CartDrawer';
 import { CheckoutModal } from './components/retailer/CheckoutModal';
 import { OrderConfirmationModal } from './components/retailer/OrderConfirmationModal';
@@ -58,22 +59,15 @@ export const App: React.FC = () => {
 
       {/* Main Content Area Based on Current View */}
       <main>
-        {currentView === 'landing' && (
+        {selectedProductForDetail ? (
           <>
-            <Hero />
-            <TrustStrip />
-            <FeaturedCollection />
-            <AppPreviewSection />
-            <FactoryShowcase />
-            <BentoBenefits />
-            <AccessPortals />
-            <AboutContact />
-            <Footer />
-
-            {/* Modals triggered from landing page */}
-            <ProductDetailModal
+            <ProductDetailPage
               product={selectedProductForDetail}
-              onClose={() => setSelectedProductForDetail(null)}
+              onBack={() => setSelectedProductForDetail(null)}
+              onBuyNow={() => {
+                setSelectedProductForDetail(null);
+                setIsCheckoutOpen(true);
+              }}
             />
 
             <CartDrawer
@@ -115,6 +109,60 @@ export const App: React.FC = () => {
               onClose={() => setActiveInvoice(null)}
             />
           </>
+        ) : (
+          currentView === 'landing' && (
+            <>
+              <Hero />
+              <TrustStrip />
+              <FeaturedCollection />
+              <AppPreviewSection />
+              <FactoryShowcase />
+              <BentoBenefits />
+              <AccessPortals />
+              <AboutContact />
+              <Footer />
+
+              {/* Modals triggered from landing page */}
+              <CartDrawer
+                isOpen={isCartOpen}
+                onClose={() => setIsCartOpen(false)}
+                onOpenCheckout={() => setIsCheckoutOpen(true)}
+              />
+
+              <CheckoutModal
+                isOpen={isCheckoutOpen}
+                onClose={() => setIsCheckoutOpen(false)}
+                onOrderSuccess={(order) => {
+                  setIsCheckoutOpen(false);
+                  setConfirmedOrder(order);
+                  setIsConfirmationOpen(true);
+                }}
+              />
+
+              <OrderConfirmationModal
+                order={confirmedOrder}
+                isOpen={isConfirmationOpen}
+                onClose={() => setIsConfirmationOpen(false)}
+                onViewMyOrders={() => {
+                  setIsConfirmationOpen(false);
+                  setCurrentView('retailer');
+                  if (confirmedOrder) {
+                    setTrackingOrder(confirmedOrder);
+                  }
+                }}
+              />
+
+              <OrderTrackingModal
+                order={trackingOrder}
+                onClose={() => setTrackingOrder(null)}
+              />
+
+              <InvoicesView
+                invoice={activeInvoice}
+                onClose={() => setActiveInvoice(null)}
+              />
+            </>
+          )
         )}
 
         {currentView === 'retailer-auth' && (
