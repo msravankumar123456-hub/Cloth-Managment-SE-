@@ -6,11 +6,12 @@ import {
   Settings, ArrowLeft, Building2, Store, CreditCard, Factory, Boxes,
   ClipboardList, UserCog, Shield, ScrollText, LogOut, Plus, Pencil,
   Trash2, CheckCircle, XCircle, Search, RefreshCw, ChevronDown, ChevronUp,
-  Eye, EyeOff, AlertCircle
+  Eye, EyeOff, AlertCircle, ExternalLink
 } from 'lucide-react';
 import { InvoicesView } from '../retailer/InvoicesView';
 import { OrderTrackingModal } from '../retailer/OrderTrackingModal';
-import { FactoryStaff, ActivityLog } from '../../types';
+import { RetailerDetailModal } from './RetailerDetailModal';
+import { FactoryStaff, ActivityLog, Retailer } from '../../types';
 
 // ─────────────────────────── types ───────────────────────────────────────────
 interface StatCard {
@@ -59,12 +60,14 @@ const NAV_ITEMS = [
 export const AdminPortal: React.FC = () => {
   const {
     currentUser, setCurrentView, orders, products, invoices, retailers,
+    removeRetailer,
     trackingOrder, setTrackingOrder, activeInvoice, setActiveInvoice,
     showToast, isDatabaseConnected, updateOrderStatus, logout
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedRetailer, setSelectedRetailer] = useState<Retailer | null>(null);
 
   // DB-fetched data exclusive to admin
   const [staffList,  setStaffList]  = useState<FactoryStaff[]>([]);
@@ -318,7 +321,16 @@ export const AdminPortal: React.FC = () => {
                     <tbody className="divide-y divide-white/[0.04]">
                       {retailers.map(r => (
                         <tr key={r.id} className="hover:bg-white/[0.02]">
-                          <td className="py-3 px-4 font-semibold text-white">{r.name}</td>
+                          <td className="py-3 px-4">
+                            <button
+                              onClick={() => setSelectedRetailer(r)}
+                              className="font-semibold text-white hover:text-[#FF7135] text-left transition-colors cursor-pointer group flex items-center gap-1.5 focus:outline-none"
+                              title="Click to view retailer details or remove account"
+                            >
+                              <span className="group-hover:underline underline-offset-2">{r.name}</span>
+                              <ExternalLink className="w-3 h-3 text-[#71717A] opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                          </td>
                           <td className="py-3 px-4 text-[#A1A1AA]">{r.businessName}</td>
                           <td className="py-3 px-4 text-[#71717A]">{r.email}</td>
                           <td className="py-3 px-4 text-[#A1A1AA]">{r.city}</td>
@@ -728,6 +740,12 @@ export const AdminPortal: React.FC = () => {
       {/* Global Modals */}
       <OrderTrackingModal order={trackingOrder} onClose={() => setTrackingOrder(null)} />
       <InvoicesView invoice={activeInvoice} onClose={() => setActiveInvoice(null)} />
+      <RetailerDetailModal
+        retailer={selectedRetailer}
+        orders={orders}
+        onClose={() => setSelectedRetailer(null)}
+        onRemoveRetailer={removeRetailer}
+      />
     </div>
   );
 };

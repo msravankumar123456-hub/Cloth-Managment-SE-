@@ -68,6 +68,7 @@ interface AppContextType {
   }) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
   retailers: Retailer[];
+  removeRetailer: (retailerId: string) => Promise<{ success: boolean; message?: string }>;
   invoices: Invoice[];
   activeFilter: ClothingCategory | 'All';
   setActiveFilter: (cat: ClothingCategory | 'All') => void;
@@ -921,6 +922,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const removeRetailer = async (retailerId: string): Promise<{ success: boolean; message?: string }> => {
+    if (!currentUser || currentUser.role !== 'admin') {
+      const msg = 'Unauthorized operation: Only Factory Admins can remove retailer accounts.';
+      showToast(msg, 'error');
+      return { success: false, message: msg };
+    }
+    if (!supabase) {
+      const msg = 'Database connection unavailable.';
+      showToast(msg, 'error');
+      return { success: false, message: msg };
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('remove_retailer_account', {
+        p_retailer_id: retailerId,
+      });
+
+      if (error) {
+        let errorMsg = 'Failed to remove account.';
+        if (error.message.includes('Unauthorized') || error.code === '42501') {
+          errorMsg = 'Unauthorized operation.';
+        } else if (error.message.includes('not found') || error.code === 'P0002') {
+          errorMsg = 'Account not found.';
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+        showToast(errorMsg, 'error');
+        return { success: false, message: errorMsg };
+      }
+
+      setRetailers(prev => prev.filter(r => r.id !== retailerId));
+      
+      const hadTx = data?.had_transactions;
+      const successMsg = hadTx
+        ? `Account successfully removed. Preserved ${data.preserved_orders || 0} historical transactions.`
+        : 'Account successfully removed.';
+      showToast(successMsg, 'success');
+      loadDatabaseData();
+      return { success: true, message: successMsg };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to remove account.';
+      showToast(msg, 'error');
+      return { success: false, message: msg };
+    }
+  };
+
   const submitEnquiry = async (enquiryData: Omit<Enquiry, 'id' | 'submittedAt'>) => {
     if (!supabase) return;
     const newEnquiry: Enquiry = {
@@ -982,6 +1029,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         placeOrder,
         updateOrderStatus,
         retailers,
+        removeRetailer,
         invoices,
         activeFilter,
         setActiveFilter,
