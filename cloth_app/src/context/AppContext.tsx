@@ -30,6 +30,7 @@ import {
   mapDbShippingZoneToApp,
   mapDbPaymentToApp
 } from '../lib/supabase';
+import { INITIAL_PRODUCTS } from '../data/mockData';
 
 export type AppView = 'landing' | 'retailer-auth' | 'factory-auth' | 'admin-auth' | 'retailer' | 'factory' | 'admin';
 
@@ -147,8 +148,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const isAuthenticated = Boolean(currentUser);
 
-  // Data Collections (Source of truth: Supabase database)
-  const [products, setProducts] = useState<Product[]>([]);
+  // Helper to ensure all app-defined collections (Sarees, Dresses, Blazers, Pants)
+  // are visible even before SQL migrations are applied to remote Supabase
+  const mergeWithInitialProducts = useCallback((dbProducts: Product[]): Product[] => {
+    const dbIds = new Set(dbProducts.map(p => p.id));
+    const missing = INITIAL_PRODUCTS.filter(p => !dbIds.has(p.id));
+    return [...dbProducts, ...missing];
+  }, []);
+
+  // Data Collections (Source of truth: Supabase database with fallback overlay)
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [orders, setOrders] = useState<Order[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [retailers, setRetailers] = useState<Retailer[]>([]);
@@ -309,7 +318,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (prodErr) throw prodErr;
       if (productsData) {
-        setProducts(productsData.map(mapDbProductToApp));
+        setProducts(mergeWithInitialProducts(productsData.map(mapDbProductToApp)));
       }
 
       // 2. Orders & Invoices (Protected by RLS)
@@ -381,7 +390,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const channel = client.channel('loopmex_live_sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
         client.from('products').select('*').order('id', { ascending: true }).then(({ data }) => {
-          if (data) setProducts(data.map(mapDbProductToApp));
+          if (data) setProducts(mergeWithInitialProducts(data.map(mapDbProductToApp)));
         });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
@@ -960,7 +969,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Refresh catalog to reflect updated stock
       const { data: updatedProducts } = await supabase.from('products').select('*').order('id', { ascending: true });
       if (updatedProducts) {
-        setProducts(updatedProducts.map(mapDbProductToApp));
+        setProducts(mergeWithInitialProducts(updatedProducts.map(mapDbProductToApp)));
       }
 
       return createdOrder;
@@ -975,7 +984,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const refreshProducts = async () => {
     if (!supabase) return;
     const { data } = await supabase.from('products').select('*').order('id', { ascending: true });
-    if (data) setProducts(data.map(mapDbProductToApp));
+    if (data) setProducts(mergeWithInitialProducts(data.map(mapDbProductToApp)));
   };
 
   // Admin-only stock adjustment. Authorization is enforced again in the RPC.
