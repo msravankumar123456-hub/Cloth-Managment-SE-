@@ -98,6 +98,8 @@ interface AppContextType {
   setActiveInvoice: (inv: Invoice | null) => void;
   enquiries: Enquiry[];
   submitEnquiry: (enquiry: Omit<Enquiry, 'id' | 'submittedAt'>) => Promise<void>;
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
   isDatabaseConnected: boolean;
   supabaseUrl: string;
   isLoading: boolean;
@@ -132,6 +134,36 @@ const readCart = (): CartItem[] => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useEffect(() => {
     cleanLegacyStorage();
+  }, []);
+
+  // Theme State: Dark / Bright (Light) Mode
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      const saved = localStorage.getItem('loopmex_theme');
+      return (saved === 'light' || saved === 'dark') ? saved : 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    }
+    try {
+      localStorage.setItem('loopmex_theme', theme);
+    } catch {
+      // Ignore
+    }
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
   // Navigation View
@@ -1165,6 +1197,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveInvoice,
         enquiries,
         submitEnquiry,
+        theme,
+        toggleTheme,
         isDatabaseConnected,
         supabaseUrl,
         isLoading,

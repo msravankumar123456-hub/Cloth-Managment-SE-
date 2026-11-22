@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ShoppingBag, Menu, X, ArrowUpRight, LayoutDashboard, Store, User, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Menu, X, ArrowUpRight, LayoutDashboard, Store, User, ShieldCheck, Sun, Moon } from 'lucide-react';
 
 export const TopNav: React.FC = () => {
-  const { currentView, setCurrentView, cart, setIsCartOpen, isAuthenticated, currentUser, logout } = useApp();
+  const { currentView, setCurrentView, cart, setIsCartOpen, isAuthenticated, currentUser, logout, theme, toggleTheme } = useApp();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -50,24 +50,46 @@ export const TopNav: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           
-          {/* Left: Hanger Logo + Wordmark */}
-          <div 
-            onClick={() => setCurrentView('landing')}
-            className="flex items-center gap-2.5 cursor-pointer group select-none"
-          >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E2026] to-[#141519] border border-white/10 flex items-center justify-center text-[#FF7135] shadow-inner group-hover:border-[#FF7135]/40 transition-colors">
-              {/* Clothing Hanger Icon */}
-              <svg className="w-4 h-4 stroke-current transition-transform duration-300 group-hover:scale-105" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2a3 3 0 0 1 3 3c0 .8-.4 1.5-1 2L2 16h20L13 7a3 3 0 0 1-1-5z" />
-                <path d="M2 16v2a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2" />
-              </svg>
+          {/* Left: Hanger Logo + Wordmark and Dark/Bright Mode Toggle Down of It */}
+          <div className="flex flex-col items-start gap-1">
+            <div 
+              onClick={() => setCurrentView('landing')}
+              className="flex items-center gap-2.5 cursor-pointer group select-none"
+            >
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1E2026] to-[#141519] border border-white/10 flex items-center justify-center text-[#FF7135] shadow-inner group-hover:border-[#FF7135]/40 transition-colors">
+                {/* Clothing Hanger Icon */}
+                <svg className="w-4 h-4 stroke-current transition-transform duration-300 group-hover:scale-105" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2a3 3 0 0 1 3 3c0 .8-.4 1.5-1 2L2 16h20L13 7a3 3 0 0 1-1-5z" />
+                  <path d="M2 16v2a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2" />
+                </svg>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-semibold tracking-tight text-white text-base">Loopmex</span>
+                <span className="text-[10px] font-mono tracking-wider uppercase px-1.5 py-0.5 rounded text-[#FF7135] bg-[#FF7135]/10 border border-[#FF7135]/20">
+                  PRO
+                </span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-semibold tracking-tight text-white text-base">Loopmex</span>
-              <span className="text-[10px] font-mono tracking-wider uppercase px-1.5 py-0.5 rounded text-[#FF7135] bg-[#FF7135]/10 border border-[#FF7135]/20">
-                PRO
-              </span>
-            </div>
+
+            {/* Dark Mode & Bright Mode Switch Button */}
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium border transition-all cursor-pointer bg-white/[0.06] hover:bg-white/15 text-[#D4D4D8] border-white/10 hover:border-[#FF7135]/50 shadow-sm"
+              title="Switch between Dark Mode and Bright Mode"
+              aria-label="Switch between Dark and Bright Mode"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-3 h-3 text-amber-400 animate-pulse" />
+                  <span className="text-amber-300">Bright Mode</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3 h-3 text-indigo-500" />
+                  <span className="text-indigo-600 font-semibold">Dark Mode</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* Centre Navigation Links (Desktop) */}

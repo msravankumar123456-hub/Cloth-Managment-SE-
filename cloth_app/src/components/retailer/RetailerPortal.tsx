@@ -372,6 +372,9 @@ export const RetailerPortal: React.FC = () => {
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                           loading="lazy"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/pants/classic-indigo-jeans.jpg';
+                          }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#17181C] via-transparent to-black/20 opacity-80" />
 

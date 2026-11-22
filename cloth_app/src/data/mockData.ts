@@ -44,7 +44,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     wholesalePrice: 620,
     retailMrp: 2499,
     moq: 35,
-    image: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1000&q=80',
+    image: '/images/pants/classic-indigo-jeans.jpg',
     stock: { S: 85, M: 195, L: 240, XL: 160, XXL: 70 },
     colors: ['Deep Raw Indigo', 'Vintage Stonewash', 'Washed Charcoal'],
     tags: ['High Durability', '13.5oz Twill', 'Top Retail Margin'],

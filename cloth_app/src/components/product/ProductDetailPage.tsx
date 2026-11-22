@@ -244,6 +244,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     src={imgUrl}
                     alt={`${product.name} angle ${idx + 1}`}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/pants/classic-indigo-jeans.jpg';
+                    }}
                   />
                 </button>
               ))}
@@ -256,6 +259,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 alt={product.name}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 cursor-zoom-in"
                 onClick={() => setIsZoomOpen(true)}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/pants/classic-indigo-jeans.jpg';
+                }}
               />
 
               {/* Discount Badge */}

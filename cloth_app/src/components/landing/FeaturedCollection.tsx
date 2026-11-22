@@ -109,6 +109,9 @@ export const FeaturedCollection: React.FC = () => {
                     alt={product.name}
                     className="w-full h-full object-cover object-center filter brightness-95 group-hover:scale-105 group-hover:brightness-100 transition-transform duration-500 ease-out"
                     loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/pants/classic-indigo-jeans.jpg';
+                    }}
                   />
 
                   {/* Gradient Overlay */}

@@ -23,19 +23,23 @@ export const supabase = isSupabaseConfigured
   : null;
 
 // Product Mapper (Supabase snake_case <-> App camelCase)
-export const mapDbProductToApp = (db: any): Product => ({
-  id: db.id,
-  name: db.name,
-  category: db.category,
-  fabric: db.fabric,
-  description: db.description || '',
-  wholesalePrice: db.wholesale_price,
-  retailMrp: db.retail_mrp,
-  moq: db.moq || 30,
-  image: db.image,
-  images: Array.isArray(db.images) && db.images.length > 0 
-    ? db.images 
-    : [db.image],
+export const mapDbProductToApp = (db: any): Product => {
+  const resolvedImage = (db.id === 'prod-3' || (typeof db.image === 'string' && db.image.includes('1542272604-780c96856592')))
+    ? '/images/pants/classic-indigo-jeans.jpg'
+    : db.image;
+  return {
+    id: db.id,
+    name: db.name,
+    category: db.category,
+    fabric: db.fabric,
+    description: db.description || '',
+    wholesalePrice: db.wholesale_price,
+    retailMrp: db.retail_mrp,
+    moq: db.moq || 30,
+    image: resolvedImage,
+    images: Array.isArray(db.images) && db.images.length > 0 
+      ? db.images.map((img: string) => (typeof img === 'string' && img.includes('1542272604-780c96856592')) ? '/images/pants/classic-indigo-jeans.jpg' : img)
+      : [resolvedImage],
   stock: {
     S: db.stock_s ?? 0,
     M: db.stock_m ?? 0,
@@ -51,7 +55,8 @@ export const mapDbProductToApp = (db: any): Product => ({
   modelInfo: db.model_info || "Model is 6'1\" (185 cm) wearing size L (Chest 40\")",
   isFeatured: Boolean(db.is_featured),
   gsm: db.gsm,
-});
+  };
+};
 
 export const mapAppProductToDb = (p: Product) => ({
   id: p.id,
