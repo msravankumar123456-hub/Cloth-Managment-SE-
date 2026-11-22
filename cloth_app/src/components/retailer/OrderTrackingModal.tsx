@@ -124,15 +124,15 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({ order, o
           {/* Packed Items Preview in Order */}
           <div className="p-4 rounded-xl bg-[#101114] border border-white/[0.06] space-y-2 text-xs">
             <span className="text-[#71717A] font-mono uppercase text-[10px]">Carton Contents</span>
-            {order.items.map(item => (
+            {(order.items || []).map(item => (
               <div key={item.id} className="flex justify-between py-1 border-b border-white/[0.04] last:border-0">
-                <span className="text-white font-medium">{item.product.name} ({item.selectedColor})</span>
-                <span className="font-mono text-[#A1A1AA]">{item.totalQuantity} pcs • ₹{item.itemTotal.toLocaleString()}</span>
+                <span className="text-white font-medium">{item.product?.name || 'Product'} ({item.selectedColor})</span>
+                <span className="font-mono text-[#A1A1AA]">{item.totalQuantity || 0} pcs • ₹{(item.itemTotal || 0).toLocaleString()}</span>
               </div>
             ))}
             <div className="pt-2 flex justify-between font-bold text-white">
               <span>Grand Total (+5% GST)</span>
-              <span className="text-[#FF7135]">₹{order.grandTotal.toLocaleString()}</span>
+              <span className="text-[#FF7135]">₹{(order.grandTotal || 0).toLocaleString()}</span>
             </div>
           </div>
 

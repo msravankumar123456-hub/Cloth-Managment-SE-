@@ -70,26 +70,29 @@ export const mapAppProductToDb = (p: Product) => ({
 });
 
 // Order Mapper
+// Handles BOTH database rows (snake_case) and the create_order RPC response
+// (camelCase). Previously only snake_case was handled, so a successful order
+// produced undefined totals and crashed the tracking modal (blank black page).
 export const mapDbOrderToApp = (db: any): Order => ({
   id: db.id,
-  orderNumber: db.order_number,
+  orderNumber: db.order_number ?? db.orderNumber,
   date: db.date,
-  retailerName: db.retailer_name,
-  retailerStore: db.retailer_store,
-  retailerCity: db.retailer_city,
-  retailerPhone: db.retailer_phone,
+  retailerName: db.retailer_name ?? db.retailerName,
+  retailerStore: db.retailer_store ?? db.retailerStore,
+  retailerCity: db.retailer_city ?? db.retailerCity,
+  retailerPhone: db.retailer_phone ?? db.retailerPhone,
   items: typeof db.items === 'string' ? JSON.parse(db.items) : (db.items || []),
-  totalPieces: db.total_pieces,
-  subtotal: db.subtotal,
-  gstAmount: db.gst_amount,
-  grandTotal: db.grand_total,
-  status: db.status,
-  trackingNumber: db.tracking_number,
-  courierName: db.courier_name,
-  dispatchDate: db.dispatch_date,
-  estimatedDelivery: db.estimated_delivery,
-  paymentMethod: db.payment_method,
-  paymentStatus: db.payment_status,
+  totalPieces: db.total_pieces ?? db.totalPieces ?? 0,
+  subtotal: db.subtotal ?? 0,
+  gstAmount: db.gst_amount ?? db.gstAmount ?? 0,
+  grandTotal: db.grand_total ?? db.grandTotal ?? 0,
+  status: db.status ?? 'Confirmed',
+  trackingNumber: db.tracking_number ?? db.trackingNumber,
+  courierName: db.courier_name ?? db.courierName,
+  dispatchDate: db.dispatch_date ?? db.dispatchDate,
+  estimatedDelivery: db.estimated_delivery ?? db.estimatedDelivery,
+  paymentMethod: db.payment_method ?? db.paymentMethod,
+  paymentStatus: db.payment_status ?? db.paymentStatus ?? 'Paid',
   notes: db.notes,
 });
 
