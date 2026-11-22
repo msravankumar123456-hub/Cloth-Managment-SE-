@@ -1,10 +1,7 @@
 -- ==============================================================================
 -- File: supabase_remove_retailer_rpc.sql
--- Fixes: "function public.is_factory_admin(uuid) does not exist"
--- Run this in the Supabase SQL Editor to install the helper function and RPC.
 -- ==============================================================================
 
--- 1. Create the helper function is_factory_admin(uuid)
 CREATE OR REPLACE FUNCTION public.is_factory_admin(
   p_user_id UUID DEFAULT auth.uid()
 )
@@ -26,7 +23,6 @@ BEGIN
 END;
 $$;
 
--- 2. Create the self-contained remove_retailer_account RPC
 CREATE OR REPLACE FUNCTION public.remove_retailer_account(
   p_retailer_id UUID
 )
@@ -36,95 +32,73 @@ SECURITY DEFINER
 SET search_path = public, auth
 AS $$
 DECLARE
-  v_caller_id UUID;
-  v_retailer RECORD;
-  v_orders_count INTEGER := 0;
-  v_invoices_count INTEGER := 0;
+  v_admin_id UUID;
+  v_email TEXT;
+  v_name TEXT;
+  v_bname TEXT;
+  v_orders INTEGER := 0;
+  v_invoices INTEGER := 0;
 BEGIN
-  -- 1. Security Check: Direct check in factory_members (zero dependency)
-  v_caller_id := auth.uid();
-  IF v_caller_id IS NULL OR NOT EXISTS (
+  -- 1. Security Check: verify caller is factory_admin
+  v_admin_id := auth.uid();
+  IF v_admin_id IS NULL OR NOT EXISTS (
     SELECT 1 FROM public.factory_members
-    WHERE id = v_caller_id AND role = 'factory_admin' AND is_active = TRUE
+    WHERE id = v_admin_id AND role = 'factory_admin' AND is_active = TRUE
   ) THEN
     RAISE EXCEPTION 'Unauthorized operation: Only Factory Admins can remove retailer accounts.'
       USING ERRCODE = '42501';
   END IF;
 
   -- 2. Existence Check
-  SELECT * INTO v_retailer
+  SELECT email, name, business_name
+  INTO v_email, v_name, v_bname
   FROM public.retailers
   WHERE id = p_retailer_id;
 
-  IF NOT FOUND THEN
+  IF v_email IS NULL THEN
     RAISE EXCEPTION 'Account not found.'
       USING ERRCODE = 'P0002';
   END IF;
 
-  -- 3. Count existing orders and invoices
-  SELECT COUNT(*) INTO v_orders_count
-  FROM public.orders
-  WHERE retailer_id = p_retailer_id OR user_id = p_retailer_id;
-
-  SELECT COUNT(*) INTO v_invoices_count
-  FROM public.invoices
-  WHERE retailer_id = p_retailer_id OR user_id = p_retailer_id;
+  -- 3. Count existing orders & invoices
+  SELECT COUNT(*) INTO v_orders FROM public.orders WHERE retailer_id = p_retailer_id OR user_id = p_retailer_id;
+  SELECT COUNT(*) INTO v_invoices FROM public.invoices WHERE retailer_id = p_retailer_id OR user_id = p_retailer_id;
 
   -- 4. Preserve Historical Transactions
-  -- Safely detach foreign keys so all orders, invoices, and totals remain intact
-  IF v_orders_count > 0 THEN
-    UPDATE public.orders
-    SET retailer_id = NULL,
-        user_id = NULL
-    WHERE retailer_id = p_retailer_id OR user_id = p_retailer_id;
+  IF v_orders > 0 THEN
+    UPDATE public.orders SET retailer_id = NULL, user_id = NULL WHERE retailer_id = p_retailer_id OR user_id = p_retailer_id;
   END IF;
 
-  IF v_invoices_count > 0 THEN
-    UPDATE public.invoices
-    SET retailer_id = NULL,
-        user_id = NULL
-    WHERE retailer_id = p_retailer_id OR user_id = p_retailer_id;
+  IF v_invoices > 0 THEN
+    UPDATE public.invoices SET retailer_id = NULL, user_id = NULL WHERE retailer_id = p_retailer_id OR user_id = p_retailer_id;
   END IF;
 
-  -- 5. Delete from public.retailers
+  -- 5. Delete retailer & auth user
   DELETE FROM public.retailers WHERE id = p_retailer_id;
-
-  -- 6. Delete from auth.users to permanently prevent login
   DELETE FROM auth.users WHERE id = p_retailer_id;
 
-  -- 7. Audit log in factory_activity_logs (safe if table exists)
+  -- 6. Audit log in factory_activity_logs
   BEGIN
     INSERT INTO public.factory_activity_logs (
-      user_id,
-      user_email,
-      action,
-      resource_type,
-      resource_id,
-      details
+      user_id, user_email, action, resource_type, resource_id, details
     ) VALUES (
-      v_caller_id,
-      (SELECT email FROM auth.users WHERE id = v_caller_id),
+      v_admin_id,
+      (SELECT email FROM auth.users WHERE id = v_admin_id),
       'REMOVE_RETAILER_ACCOUNT',
       'retailer',
       p_retailer_id::text,
-      jsonb_build_object(
-        'name', v_retailer.name,
-        'email', v_retailer.email,
-        'business_name', v_retailer.business_name,
-        'preserved_orders', v_orders_count,
-        'preserved_invoices', v_invoices_count
-      )
+      jsonb_build_object('name', v_name, 'email', v_email, 'business_name', v_bname, 'preserved_orders', v_orders, 'preserved_invoices', v_invoices)
     );
   EXCEPTION WHEN OTHERS THEN
-    NULL; -- Ignore if logs table is not present
+    NULL;
   END;
 
   RETURN jsonb_build_object(
     'success', TRUE,
     'message', 'Account successfully removed.',
-    'had_transactions', (v_orders_count > 0 OR v_invoices_count > 0),
-    'preserved_orders', v_orders_count,
-    'preserved_invoices', v_invoices_count
+    'had_transactions', (v_orders > 0 OR v_invoices > 0),
+    'preserved_orders', v_orders,
+    'preserved_invoices', v_invoices
   );
 END;
 $$;
