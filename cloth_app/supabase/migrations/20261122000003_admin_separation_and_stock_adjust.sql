@@ -98,6 +98,12 @@ UPDATE public.factory_members
 SET is_active = FALSE
 WHERE role = 'factory_admin' AND is_active = TRUE;
 
+-- Ensure the demo admin has a known working password.
+UPDATE auth.users
+SET encrypted_password = extensions.crypt('Admin12345!', extensions.gen_salt('bf')),
+    email_confirmed_at = COALESCE(email_confirmed_at, now())
+WHERE lower(email) = 'demo123@gmail.com';
+
 -- ---------------------------------------------------------------------------
 -- 5. Stock adjustment history
 -- ---------------------------------------------------------------------------
