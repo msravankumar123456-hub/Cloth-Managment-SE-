@@ -6,7 +6,7 @@ import {
   Settings, ArrowLeft, Building2, Store, CreditCard, Factory, Boxes,
   ClipboardList, UserCog, Shield, ScrollText, LogOut, Plus, Pencil,
   Trash2, CheckCircle, XCircle, Search, RefreshCw, ChevronDown, ChevronUp,
-  Eye, EyeOff, AlertCircle, ExternalLink
+  Eye, EyeOff, AlertCircle, ExternalLink, SlidersHorizontal
 } from 'lucide-react';
 import { InvoicesView } from '../retailer/InvoicesView';
 import { OrderTrackingModal } from '../retailer/OrderTrackingModal';
@@ -42,6 +42,7 @@ const NAV_ITEMS = [
   { id: 'overview',    label: 'Overview',         icon: LayoutDashboard },
   { id: 'products',    label: 'Products',          icon: Package },
   { id: 'inventory',   label: 'Inventory',         icon: Layers },
+  { id: 'stock-adjust',label: 'Stock Adjust',      icon: SlidersHorizontal },
   { id: 'retailers',   label: 'Retailers',         icon: Store },
   { id: 'orders',      label: 'Orders',            icon: ShoppingBag },
   { id: 'invoices',    label: 'Invoices',          icon: FileText },
@@ -62,7 +63,8 @@ export const AdminPortal: React.FC = () => {
     currentUser, setCurrentView, orders, products, invoices, retailers,
     removeRetailer,
     trackingOrder, setTrackingOrder, activeInvoice, setActiveInvoice,
-    showToast, isDatabaseConnected, updateOrderStatus, logout
+    showToast, isDatabaseConnected, updateOrderStatus, logout,
+    adjustStock, refreshProducts
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -300,6 +302,16 @@ export const AdminPortal: React.FC = () => {
             {/* ── Inventory (fabric) ── */}
             {activeTab === 'inventory' && (
               <AdminInventorySection products={products} showToast={showToast} />
+            )}
+
+            {/* ── Stock Adjust (admin only) ── */}
+            {activeTab === 'stock-adjust' && (
+              <AdminStockAdjustSection
+                products={products}
+                adjustStock={adjustStock}
+                refreshProducts={refreshProducts}
+                showToast={showToast}
+              />
             )}
 
             {/* ── Retailers ── */}
@@ -862,6 +874,222 @@ const AdminInventorySection: React.FC<{ products: any[]; showToast: (m: string, 
     </div>
   </div>
 );
+
+// ─────────────────────────── stock adjust (ADMIN ONLY) ───────────────────────
+const AdminStockAdjustSection: React.FC<{
+  products: any[];
+  adjustStock: (input: {
+    productId: string;
+    adjustmentType: 'Stock In' | 'Stock Out' | 'Set Stock';
+    size: string;
+    quantity: number;
+    reason: string;
+  }) => Promise<unknown>;
+  refreshProducts: () => Promise<void>;
+  showToast: (m: string, t?: any) => void;
+}> = ({ products, adjustStock, refreshProducts, showToast }) => {
+  const [productId, setProductId] = useState('');
+  const [size, setSize] = useState('TOTAL');
+  const [adjustmentType, setAdjustmentType] = useState<'Stock In' | 'Stock Out' | 'Set Stock'>('Stock In');
+  const [quantity, setQuantity] = useState('');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const selected = products.find(p => p.id === productId);
+  const totalStock = selected
+    ? Object.values(selected.stock as Record<string, number>).reduce((a: number, b: number) => a + b, 0)
+    : 0;
+
+  const loadHistory = useCallback(async () => {
+    if (!supabase) return;
+    setLoadingHistory(true);
+    const { data, error } = await supabase
+      .from('stock_adjustments')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(40);
+    if (!error && data) setHistory(data);
+    setLoadingHistory(false);
+  }, []);
+
+  useEffect(() => { loadHistory(); }, [loadHistory]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const qty = Number(quantity);
+    if (!productId) return showToast('Select a product first.', 'error');
+    if (!Number.isFinite(qty) || qty < 0) return showToast('Enter a valid quantity (0 or more).', 'error');
+    if (!reason.trim()) return showToast('A reason is required for the audit log.', 'error');
+
+    setBusy(true);
+    try {
+      const result: any = await adjustStock({
+        productId,
+        adjustmentType,
+        size,
+        quantity: qty,
+        reason: reason.trim(),
+      });
+      showToast(
+        `Stock updated: ${result?.previous_quantity ?? '—'} → ${result?.new_quantity ?? '—'} ${size === 'TOTAL' ? 'total' : `size ${size}`}`,
+        'success'
+      );
+      setQuantity('');
+      setReason('');
+      await refreshProducts();
+      await loadHistory();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Stock adjustment failed.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-white">Stock Adjust</h2>
+        <p className="text-xs text-[#71717A]">
+          Admin-only stock corrections. Every change is written to the audit history.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <form onSubmit={submit} className="lg:col-span-2 p-5 rounded-2xl bg-[#17181C] border border-white/[0.08] space-y-4">
+          <div>
+            <label className="block text-[11px] font-mono uppercase tracking-wider text-[#A1A1AA] mb-1.5">Product</label>
+            <select
+              value={productId}
+              onChange={e => setProductId(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-[#101114] border border-white/10 text-white text-xs focus:outline-none focus:border-[#FF7135]"
+            >
+              <option value="">Select a garment…</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+
+          {selected && (
+            <div className="grid grid-cols-5 gap-1.5">
+              {(['S','M','L','XL','XXL'] as const).map(sz => (
+                <div key={sz} className="p-2 rounded-lg bg-[#101114] border border-white/[0.06] text-center">
+                  <div className="text-[10px] font-mono text-[#FF7135]">{sz}</div>
+                  <div className="text-sm font-bold text-white">{selected.stock[sz] || 0}</div>
+                </div>
+              ))}
+              <div className="col-span-5 text-[10px] text-[#71717A] font-mono">TOTAL: {totalStock} pcs</div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-mono uppercase tracking-wider text-[#A1A1AA] mb-1.5">Size</label>
+              <select
+                value={size}
+                onChange={e => setSize(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-[#101114] border border-white/10 text-white text-xs focus:outline-none focus:border-[#FF7135]"
+              >
+                <option value="TOTAL">Total (all sizes)</option>
+                {['S','M','L','XL','XXL'].map(s => <option key={s} value={s}>Size {s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-mono uppercase tracking-wider text-[#A1A1AA] mb-1.5">Type</label>
+              <select
+                value={adjustmentType}
+                onChange={e => setAdjustmentType(e.target.value as any)}
+                className="w-full px-3 py-2 rounded-xl bg-[#101114] border border-white/10 text-white text-xs focus:outline-none focus:border-[#FF7135]"
+              >
+                <option value="Stock In">Stock In (+)</option>
+                <option value="Stock Out">Stock Out (−)</option>
+                <option value="Set Stock">Set Stock (=)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-mono uppercase tracking-wider text-[#A1A1AA] mb-1.5">Quantity</label>
+            <input
+              type="number"
+              min="0"
+              value={quantity}
+              onChange={e => setQuantity(e.target.value)}
+              placeholder="Number of pieces"
+              className="w-full px-3 py-2 rounded-xl bg-[#101114] border border-white/10 text-white text-xs focus:outline-none focus:border-[#FF7135]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-mono uppercase tracking-wider text-[#A1A1AA] mb-1.5">Reason (audit log)</label>
+            <textarea
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              rows={2}
+              placeholder="e.g. Fresh production batch received"
+              className="w-full px-3 py-2 rounded-xl bg-[#101114] border border-white/10 text-white text-xs focus:outline-none focus:border-[#FF7135] resize-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full py-2.5 rounded-xl bg-[#FF7135] hover:bg-[#FF5C1B] text-white font-semibold text-xs uppercase tracking-wider disabled:opacity-50 transition-colors"
+          >
+            {busy ? 'Applying…' : 'Apply Stock Adjustment'}
+          </button>
+        </form>
+
+        <div className="lg:col-span-3 rounded-2xl bg-[#17181C] border border-white/[0.08] overflow-x-auto">
+          <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between">
+            <span className="text-xs font-semibold text-white">Adjustment History</span>
+            <button
+              onClick={loadHistory}
+              className="flex items-center gap-1 text-[10px] text-[#A1A1AA] hover:text-white"
+            >
+              <RefreshCw className="w-3 h-3" /> Refresh
+            </button>
+          </div>
+          <table className="w-full text-left text-[11px]">
+            <thead className="bg-[#141519] text-[#71717A] font-mono text-[10px]">
+              <tr>
+                <th className="py-2.5 px-3">Product</th>
+                <th className="py-2.5 px-3">Type / Size</th>
+                <th className="py-2.5 px-3 text-center">Change</th>
+                <th className="py-2.5 px-3">Reason</th>
+                <th className="py-2.5 px-3">By / When</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.04]">
+              {history.map(h => {
+                const prod = products.find(p => p.id === h.product_id);
+                return (
+                  <tr key={h.id} className="hover:bg-white/[0.02]">
+                    <td className="py-2.5 px-3 font-semibold text-white">{prod?.name || h.product_id}</td>
+                    <td className="py-2.5 px-3 text-[#A1A1AA]">
+                      {h.adjustment_type} <span className="text-[#FF7135]">/ {h.size}</span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center font-mono text-white">
+                      {h.previous_quantity} → <span className="text-emerald-400">{h.new_quantity}</span>
+                    </td>
+                    <td className="py-2.5 px-3 text-[#71717A] max-w-[160px] truncate" title={h.reason}>{h.reason}</td>
+                    <td className="py-2.5 px-3 text-[#71717A]">
+                      <div className="truncate max-w-[120px]">{h.admin_email || '—'}</div>
+                      <div className="text-[9px]">{h.created_at ? new Date(h.created_at).toLocaleString() : ''}</div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {history.length === 0 && !loadingHistory && (
+            <p className="p-6 text-xs text-[#52525B]">No adjustments recorded yet.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AdminOrdersSection: React.FC<{
   orders: any[];

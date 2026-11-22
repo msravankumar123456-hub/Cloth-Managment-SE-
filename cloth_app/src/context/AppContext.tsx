@@ -53,6 +53,14 @@ interface AppContextType {
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
   updateStock: (productId: string, size: keyof SizeBreakdown, quantity: number) => Promise<void>;
+  refreshProducts: () => Promise<void>;
+  adjustStock: (input: {
+    productId: string;
+    adjustmentType: 'Stock In' | 'Stock Out' | 'Set Stock';
+    size: string;
+    quantity: number;
+    reason: string;
+  }) => Promise<unknown>;
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
   removeFromCart: (itemId: string) => void;
@@ -188,55 +196,75 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
 
-      const role = userObj.user_metadata?.role || 'retailer';
-      if (role === 'factory' || role === 'factory_member') {
-        const { data: profile } = await client
-          .from('factory_members')
-          .select('*')
-          .eq('id', userObj.id)
-          .maybeSingle();
+      // Admin accounts are a completely separate identity, stored in their own
+      // table. Check that first so an admin never falls back to a factory or
+      // retailer profile on page reload.
+      const { data: adminProfile } = await client
+        .from('admin_accounts')
+        .select('*')
+        .eq('id', userObj.id)
+        .maybeSingle();
 
-        if (profile && profile.is_active) {
-          const isAdmin = profile.role === 'factory_admin';
-          setCurrentUser({
-            id: profile.id,
-            name: profile.full_name || userObj.email?.split('@')[0] || 'Factory Member',
-            email: profile.email || userObj.email || '',
-            phone: '',
-            place: '',
-            pincode: '',
-            passwordHash: '',
-            role: isAdmin ? 'admin' : 'factory',
-            factoryRole: profile.role,
-            authenticatedAt: new Date().toISOString(),
-          });
-        } else {
-          setCurrentUser(null);
-        }
-      } else {
-        const { data: profile } = await client
-          .from('retailers')
-          .select('*')
-          .eq('id', userObj.id)
-          .maybeSingle();
+      if (adminProfile?.is_active) {
+        setCurrentUser({
+          id: adminProfile.id,
+          name: adminProfile.full_name || userObj.email?.split('@')[0] || 'Admin',
+          email: adminProfile.email || userObj.email || '',
+          phone: '',
+          place: '',
+          pincode: '',
+          passwordHash: '',
+          role: 'admin',
+          factoryRole: 'factory_admin',
+          authenticatedAt: new Date().toISOString(),
+        });
+        return;
+      }
 
-        if (!profile) {
-          setCurrentUser(null);
-          return;
-        }
+      const { data: factoryProfile } = await client
+        .from('factory_members')
+        .select('*')
+        .eq('id', userObj.id)
+        .maybeSingle();
 
+      if (factoryProfile?.is_active) {
+        setCurrentUser({
+          id: factoryProfile.id,
+          name: factoryProfile.full_name || userObj.email?.split('@')[0] || 'Factory Member',
+          email: factoryProfile.email || userObj.email || '',
+          phone: '',
+          place: '',
+          pincode: '',
+          passwordHash: '',
+          role: 'factory',
+          factoryRole: factoryProfile.role,
+          authenticatedAt: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const { data: retailerProfile } = await client
+        .from('retailers')
+        .select('*')
+        .eq('id', userObj.id)
+        .maybeSingle();
+
+      if (retailerProfile) {
         setCurrentUser({
           id: userObj.id,
-          name: profile?.name || profile?.first_name || userObj.user_metadata?.name || userObj.user_metadata?.firstName || userObj.email?.split('@')[0] || 'Retailer',
+          name: retailerProfile.name || retailerProfile.first_name || userObj.user_metadata?.name || userObj.email?.split('@')[0] || 'Retailer',
           email: userObj.email || '',
-          phone: profile?.phone || userObj.user_metadata?.phone || '',
-          place: profile?.city || profile?.place || '',
-          pincode: profile?.pincode || '',
+          phone: retailerProfile.phone || userObj.user_metadata?.phone || '',
+          place: retailerProfile.city || retailerProfile.place || '',
+          pincode: retailerProfile.pincode || '',
           passwordHash: '',
           role: 'retailer',
           authenticatedAt: new Date().toISOString(),
         });
+        return;
       }
+
+      setCurrentUser(null);
     };
 
     client.auth.getSession().then(({ data: { session } }) => {
@@ -566,6 +594,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return false;
       }
 
+      // Admin accounts are a separate identity and must use the Admin Login.
+      const { data: adminAccount } = await supabase
+        .from('admin_accounts')
+        .select('id')
+        .eq('id', signInData.user.id)
+        .maybeSingle();
+
+      if (adminAccount) {
+        await supabase.auth.signOut();
+        showToast('Admin accounts must use the Admin Login.', 'error');
+        return false;
+      }
+
       const { data: profile, error: profileError } = await supabase
         .from('factory_members')
         .select('*')
@@ -578,7 +619,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return false;
       }
 
-      if (!profile.is_active || !['factory_member', 'factory_admin', 'factory_staff'].includes(profile.role)) {
+      if (!profile.is_active || !['factory_member', 'factory_staff'].includes(profile.role)) {
         await supabase.auth.signOut();
         showToast('This factory member account is inactive or not authorized for access.', 'error');
         return false;
@@ -642,16 +683,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const { data: profile, error: profileError } = await supabase
-        .from('factory_members')
+        .from('admin_accounts')
         .select('*')
         .eq('id', signInData.user.id)
-        .eq('role', 'factory_admin')
         .eq('is_active', true)
         .maybeSingle();
 
       if (profileError || !profile) {
         await supabase.auth.signOut();
-        showToast('This account does not have Factory Admin privileges.', 'error');
+        showToast('This account is not registered as a separate Admin account.', 'error');
         return false;
       }
 
@@ -894,6 +934,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Reload the catalogue after an admin stock adjustment.
+  const refreshProducts = async () => {
+    if (!supabase) return;
+    const { data } = await supabase.from('products').select('*').order('id', { ascending: true });
+    if (data) setProducts(data.map(mapDbProductToApp));
+  };
+
+  // Admin-only stock adjustment. Authorization is enforced again in the RPC.
+  const adjustStock = async (input: {
+    productId: string;
+    adjustmentType: 'Stock In' | 'Stock Out' | 'Set Stock';
+    size: string;
+    quantity: number;
+    reason: string;
+  }) => {
+    if (!supabase || currentUser?.role !== 'admin') {
+      throw new Error('Only a separate Admin account can adjust stock.');
+    }
+    const { data, error } = await supabase.rpc('adjust_stock', {
+      p_product_id: input.productId,
+      p_adjustment_type: input.adjustmentType,
+      p_size: input.size,
+      p_quantity: input.quantity,
+      p_reason: input.reason,
+    });
+    if (error) throw new Error(error.message);
+    await refreshProducts();
+    return data;
+  };
+
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
     if (!supabase) return;
     const dispatchDate = status === 'Dispatched' ? new Date().toISOString().split('T')[0] : undefined;
@@ -1020,6 +1090,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addProduct,
         updateProduct,
         updateStock,
+        refreshProducts,
+        adjustStock,
         cart,
         addToCart,
         removeFromCart,
