@@ -16,9 +16,12 @@ export const AdminOrderDetailModal: React.FC<AdminOrderDetailModalProps> = ({ or
   if (!order) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md animate-fade-in">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/60"
+      onClick={onClose}
+    >
       <div
-        className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#1B1C21] border border-white/15 shadow-2xl shadow-black/95 text-[#F5F5F5]"
+        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#1E1F25] border border-white/20 shadow-2xl text-[#F5F5F5]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Titlebar */}
@@ -185,8 +188,6 @@ export const AdminOrderDetailModal: React.FC<AdminOrderDetailModalProps> = ({ or
           </div>
         </div>
       </div>
-
-      <button className="absolute inset-0 z-0" onClick={onClose} aria-label="Close order details" />
     </div>
   );
 };
