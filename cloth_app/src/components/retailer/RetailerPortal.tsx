@@ -15,7 +15,8 @@ import {
   Truck,
   CheckCircle2,
   Check,
-  ShieldCheck
+  ShieldCheck,
+  Download
 } from 'lucide-react';
 import { ProductDetailModal } from './ProductDetailModal';
 import { ProductDetailPage } from '../product/ProductDetailPage';
@@ -24,6 +25,7 @@ import { CheckoutModal } from './CheckoutModal';
 import { OrderTrackingModal } from './OrderTrackingModal';
 import { OrderConfirmationModal } from './OrderConfirmationModal';
 import { InvoicesView } from './InvoicesView';
+import { downloadInvoiceFile } from '../../utils/invoiceDownload';
 
 export const RetailerPortal: React.FC = () => {
   const { 
@@ -70,6 +72,8 @@ export const RetailerPortal: React.FC = () => {
 
   const categories: (ClothingCategory | 'All')[] = [
     'All',
+    'Sarees',
+    'Dresses',
     'Shirts',
     'T-Shirts',
     'Denim',
@@ -78,7 +82,7 @@ export const RetailerPortal: React.FC = () => {
     'Blazers',
   ];
 
-  const fabrics = ['All', 'Cotton', 'Linen', 'Denim', 'Chanderi', 'Fleece'];
+  const fabrics = ['All', 'Cotton', 'Linen', 'Denim', 'Chanderi', 'Silk', 'Georgette', 'Rayon', 'Fleece'];
 
   // Filter & Sort
   const filteredProducts = useMemo(() => {
@@ -582,12 +586,22 @@ export const RetailerPortal: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => setActiveInvoice(inv)}
-                          className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-[#FF7135] text-white text-[11px] font-semibold transition-colors"
-                        >
-                          View PDF
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => downloadInvoiceFile(inv)}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                            title="Download Tax Invoice to Laptop"
+                          >
+                            <Download className="w-3 h-3" />
+                            <span>Download</span>
+                          </button>
+                          <button
+                            onClick={() => setActiveInvoice(inv)}
+                            className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-[#FF7135] text-white text-[11px] font-semibold transition-colors cursor-pointer"
+                          >
+                            View PDF
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

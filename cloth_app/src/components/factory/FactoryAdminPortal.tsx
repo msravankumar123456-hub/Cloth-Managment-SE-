@@ -14,7 +14,8 @@ import {
   ExternalLink,
   ShieldCheck,
   Building2,
-  CheckCircle2
+  CheckCircle2,
+  Download
 } from 'lucide-react';
 import { AdminOverview } from './AdminOverview';
 import { AdminProducts } from './AdminProducts';
@@ -24,6 +25,7 @@ import { AdminRetailers } from './AdminRetailers';
 import { AdminDeliveries } from './AdminDeliveries';
 import { OrderTrackingModal } from '../retailer/OrderTrackingModal';
 import { InvoicesView } from '../retailer/InvoicesView';
+import { downloadInvoiceFile } from '../../utils/invoiceDownload';
 
 export const FactoryAdminPortal: React.FC = () => {
   const { 
@@ -207,12 +209,22 @@ export const FactoryAdminPortal: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <button
-                              onClick={() => setActiveInvoice(inv)}
-                              className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-[#FF7135] text-white text-[11px] font-semibold transition-colors"
-                            >
-                              Open PDF
-                            </button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => downloadInvoiceFile(inv)}
+                                className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                                title="Download Tax Invoice to Laptop"
+                              >
+                                <Download className="w-3 h-3" />
+                                <span>Download</span>
+                              </button>
+                              <button
+                                onClick={() => setActiveInvoice(inv)}
+                                className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-[#FF7135] text-white text-[11px] font-semibold transition-colors cursor-pointer"
+                              >
+                                Open PDF
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

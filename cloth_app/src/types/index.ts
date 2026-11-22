@@ -1,4 +1,4 @@
-export type ClothingCategory = 'Shirts' | 'T-Shirts' | 'Denim' | 'Kurtis' | 'Trousers' | 'Blazers';
+export type ClothingCategory = 'Shirts' | 'T-Shirts' | 'Denim' | 'Kurtis' | 'Trousers' | 'Blazers' | 'Sarees' | 'Dresses';
 
 export interface SizeBreakdown {
   S: number;

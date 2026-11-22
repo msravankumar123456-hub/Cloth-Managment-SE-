@@ -2,6 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { Invoice } from '../../types';
 import { X, Printer, Download, CheckCircle2, FileText, Building2 } from 'lucide-react';
+import { downloadInvoiceFile, printInvoice } from '../../utils/invoiceDownload';
 
 interface InvoicesViewProps {
   invoice: Invoice | null;
@@ -14,11 +15,12 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ invoice, onClose }) 
   if (!invoice) return null;
 
   const handlePrint = () => {
-    window.print();
+    printInvoice(invoice);
   };
 
   const handleDownload = () => {
-    showToast(`Invoice ${invoice.invoiceNumber} downloaded as PDF (Sample).`, 'success');
+    downloadInvoiceFile(invoice);
+    showToast(`Invoice ${invoice.invoiceNumber} downloaded to your laptop!`, 'success');
   };
 
   const cgst = Math.round(invoice.gstAmount / 2);

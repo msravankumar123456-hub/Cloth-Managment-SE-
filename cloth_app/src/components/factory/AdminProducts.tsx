@@ -221,6 +221,8 @@ export const AdminProducts: React.FC = () => {
                     <option value="Kurtis">Kurtis</option>
                     <option value="Trousers">Trousers</option>
                     <option value="Blazers">Blazers</option>
+                    <option value="Sarees">Sarees</option>
+                    <option value="Dresses">Dresses</option>
                   </select>
                 </div>
 

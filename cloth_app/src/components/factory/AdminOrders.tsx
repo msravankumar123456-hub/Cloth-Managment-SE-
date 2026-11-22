@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { OrderStatus, Order } from '../../types';
-import { ShoppingBag, ChevronDown, ChevronUp, Truck, FileText, CheckCircle2, Clock } from 'lucide-react';
+import { ShoppingBag, ChevronDown, ChevronUp, Truck, FileText, CheckCircle2, Clock, Download } from 'lucide-react';
+import { downloadInvoiceFile } from '../../utils/invoiceDownload';
 
 export const AdminOrders: React.FC = () => {
   const { orders, updateOrderStatus, setTrackingOrder, setActiveInvoice, invoices } = useApp();
@@ -153,12 +154,22 @@ export const AdminOrders: React.FC = () => {
                       </button>
 
                       {invoice && (
-                        <button
-                          onClick={() => setActiveInvoice(invoice)}
-                          className="px-3 py-1 rounded-lg bg-[#FF7135]/20 hover:bg-[#FF7135]/30 border border-[#FF7135]/30 text-[#FF7135] font-semibold"
-                        >
-                          View GST Invoice
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => downloadInvoiceFile(invoice)}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 font-semibold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Download Tax Invoice to Laptop"
+                          >
+                            <Download className="w-3 h-3" />
+                            <span>Download</span>
+                          </button>
+                          <button
+                            onClick={() => setActiveInvoice(invoice)}
+                            className="px-3 py-1 rounded-lg bg-[#FF7135]/20 hover:bg-[#FF7135]/30 border border-[#FF7135]/30 text-[#FF7135] font-semibold text-xs cursor-pointer"
+                          >
+                            View GST Invoice
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>

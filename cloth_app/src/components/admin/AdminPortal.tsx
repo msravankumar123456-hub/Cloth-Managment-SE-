@@ -6,12 +6,13 @@ import {
   Settings, ArrowLeft, Building2, Store, CreditCard, Factory, Boxes,
   ClipboardList, UserCog, Shield, ScrollText, LogOut, Plus, Pencil,
   Trash2, CheckCircle, XCircle, Search, RefreshCw, ChevronDown, ChevronUp,
-  Eye, EyeOff, AlertCircle, ExternalLink, SlidersHorizontal
+  Eye, EyeOff, AlertCircle, ExternalLink, SlidersHorizontal, Download
 } from 'lucide-react';
 import { InvoicesView } from '../retailer/InvoicesView';
 import { OrderTrackingModal } from '../retailer/OrderTrackingModal';
 import { RetailerDetailModal } from './RetailerDetailModal';
 import { AdminOrderDetailModal } from './AdminOrderDetailModal';
+import { downloadInvoiceFile } from '../../utils/invoiceDownload';
 import { FactoryStaff, ActivityLog, Retailer } from '../../types';
 
 // ─────────────────────────── types ───────────────────────────────────────────
@@ -401,12 +402,22 @@ export const AdminPortal: React.FC = () => {
                             }`}>{inv.status}</span>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <button
-                              onClick={() => setActiveInvoice(inv)}
-                              className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-[#FF7135] text-white text-[11px] font-semibold transition-colors"
-                            >
-                              View PDF
-                            </button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => downloadInvoiceFile(inv)}
+                                className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                                title="Download Tax Invoice to Laptop"
+                              >
+                                <Download className="w-3 h-3" />
+                                <span>Download</span>
+                              </button>
+                              <button
+                                onClick={() => setActiveInvoice(inv)}
+                                className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-[#FF7135] text-white text-[11px] font-semibold transition-colors cursor-pointer"
+                              >
+                                View PDF
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
