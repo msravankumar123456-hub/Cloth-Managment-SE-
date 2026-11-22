@@ -17,10 +17,12 @@ import { Footer } from './components/landing/Footer';
 // Portal Views
 import { RetailerPortal } from './components/retailer/RetailerPortal';
 import { FactoryAdminPortal } from './components/factory/FactoryAdminPortal';
+import { AdminPortal } from './components/admin/AdminPortal';
 
 // Auth Views
 import { RetailerAuth } from './components/shared/RetailerAuth';
 import { FactoryAuth } from './components/shared/FactoryAuth';
+import { AdminAuth } from './components/shared/AdminAuth';
 
 // Modals on Landing Page
 import { ProductDetailModal } from './components/retailer/ProductDetailModal';
@@ -110,6 +112,12 @@ export const App: React.FC = () => {
           </>
         )}
 
+        {currentView === 'admin-auth' && (
+          <>
+            <AdminAuth />
+          </>
+        )}
+
         {currentView === 'retailer' && (
           <>
             <RetailerPortal />
@@ -120,6 +128,13 @@ export const App: React.FC = () => {
         {currentView === 'factory' && (
           <>
             <FactoryAdminPortal />
+            <Footer />
+          </>
+        )}
+
+        {currentView === 'admin' && (
+          <>
+            <AdminPortal />
             <Footer />
           </>
         )}

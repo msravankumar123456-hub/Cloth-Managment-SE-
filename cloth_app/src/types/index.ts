@@ -120,7 +120,7 @@ export interface Enquiry {
   submittedAt: string;
 }
 
-export type AuthView = 'choose-portal' | 'retailer-auth' | 'factory-auth' | null;
+export type AuthView = 'choose-portal' | 'retailer-auth' | 'factory-auth' | 'admin-auth' | null;
 
 export type AuthMode = 'login' | 'register';
 
@@ -132,9 +132,43 @@ export interface AuthUser {
   place: string;
   pincode: string;
   passwordHash: string;
-  role: 'retailer' | 'factory';
+  role: 'retailer' | 'factory' | 'admin';
   isNewRetailer?: boolean;
   authenticatedAt: string;
+  factoryRole?: 'factory_member' | 'factory_staff' | 'factory_admin';
+  permissions?: string[];
+}
+
+// Factory Staff
+export interface FactoryStaff {
+  id: string;
+  email: string;
+  fullName: string;
+  role: 'factory_member' | 'factory_staff' | 'factory_admin';
+  isActive: boolean;
+  permissions: Record<string, boolean>;
+  createdAt: string;
+}
+
+// Factory Staff Permission
+export interface StaffPermission {
+  id: string;
+  staffId: string;
+  permission: string;
+  grantedBy?: string;
+  grantedAt: string;
+}
+
+// Activity Log
+export interface ActivityLog {
+  id: string;
+  userId?: string;
+  userEmail?: string;
+  action: string;
+  resourceType?: string;
+  resourceId?: string;
+  details: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface RetailerCredentials {

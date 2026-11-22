@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ShoppingBag, Menu, X, ArrowUpRight, LayoutDashboard, Store, User } from 'lucide-react';
+import { ShoppingBag, Menu, X, ArrowUpRight, LayoutDashboard, Store, User, ShieldCheck } from 'lucide-react';
 
 export const TopNav: React.FC = () => {
   const { currentView, setCurrentView, cart, setIsCartOpen, isAuthenticated, currentUser, logout } = useApp();
@@ -125,7 +125,15 @@ export const TopNav: React.FC = () => {
                 </div>
                 <div className="hidden sm:flex flex-col items-end">
                   <span className="text-sm font-semibold text-white">{currentUser.name}</span>
-                  <span className="text-[10px] text-[#A1A1AA]">{currentUser.isNewRetailer ? 'New Retailer' : 'Existing Member'}</span>
+                  <span className="text-[10px] text-[#A1A1AA]">
+                    {currentUser.role === 'admin'
+                      ? 'Factory Admin'
+                      : currentUser.role === 'factory'
+                      ? 'Factory Staff'
+                      : currentUser.isNewRetailer
+                      ? 'New Retailer'
+                      : 'Retailer'}
+                  </span>
                 </div>
                 <button
                   onClick={() => logout()}
@@ -160,6 +168,20 @@ export const TopNav: React.FC = () => {
               <span>Explore Collection</span>
               <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
+
+            {/* Admin Login Icon — immediately RIGHT of Explore Collection */}
+            <div className="relative group/admin">
+              <button
+                onClick={() => setCurrentView('admin-auth')}
+                className="w-9 h-9 rounded-full bg-[#17181C] border border-white/[0.08] hover:border-[#FF7135]/50 flex items-center justify-center text-[#FF7135] transition-all hover:bg-[#FF7135]/10"
+                aria-label="Admin Login"
+              >
+                <ShieldCheck className="w-4 h-4" />
+              </button>
+              <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] text-[#A1A1AA] whitespace-nowrap opacity-0 group-hover/admin:opacity-100 transition-opacity pointer-events-none bg-[#17181C] px-1.5 py-0.5 rounded">
+                Admin Login
+              </span>
+            </div>
           </div>
 
           {/* Mobile Actions: Cart & Menu Hamburger */}
@@ -196,7 +218,7 @@ export const TopNav: React.FC = () => {
         <div className="lg:hidden mt-3 px-4 py-6 bg-[#17181C]/98 border-b border-white/10 backdrop-blur-2xl">
           <div className="flex flex-col gap-4 text-sm font-medium text-[#A1A1AA]">
             {/* View Switcher Mobile */}
-            <div className="grid grid-cols-3 gap-1 p-1 bg-[#101114] rounded-xl border border-white/10 mb-2">
+            <div className="grid grid-cols-4 gap-1 p-1 bg-[#101114] rounded-xl border border-white/10 mb-2">
               <button
                 onClick={() => { setCurrentView('landing'); setMobileMenuOpen(false); }}
                 className={`py-2 text-xs rounded-lg text-center ${currentView === 'landing' ? 'bg-white/10 text-white font-bold' : ''}`}
@@ -214,6 +236,12 @@ export const TopNav: React.FC = () => {
                 className={`py-2 text-xs rounded-lg text-center ${currentView === 'factory' ? 'bg-white/10 text-white font-bold' : ''}`}
               >
                 Factory
+              </button>
+              <button
+                onClick={() => { setCurrentView('admin'); setMobileMenuOpen(false); }}
+                className={`py-2 text-xs rounded-lg text-center ${currentView === 'admin' ? 'bg-[#FF7135] text-white font-bold' : ''}`}
+              >
+                Admin
               </button>
             </div>
 
@@ -254,6 +282,13 @@ export const TopNav: React.FC = () => {
                 className="w-full py-2 text-[#A1A1AA] hover:text-white text-center font-medium"
               >
                 Factory Staff Sign In
+              </button>
+              <button
+                onClick={() => { setCurrentView('admin-auth'); setMobileMenuOpen(false); }}
+                className="w-full py-2 text-[#FF7135] hover:text-[#FFB38A] text-center font-medium flex items-center justify-center gap-1.5"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Admin Login
               </button>
               <button
                 onClick={() => { setCurrentView('retailer'); setMobileMenuOpen(false); }}

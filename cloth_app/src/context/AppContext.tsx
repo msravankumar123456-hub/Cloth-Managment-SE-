@@ -31,7 +31,7 @@ import {
   mapDbPaymentToApp
 } from '../lib/supabase';
 
-export type AppView = 'landing' | 'retailer-auth' | 'factory-auth' | 'retailer' | 'factory';
+export type AppView = 'landing' | 'retailer-auth' | 'factory-auth' | 'admin-auth' | 'retailer' | 'factory' | 'admin';
 
 interface AppContextType {
   currentView: AppView;
@@ -45,6 +45,7 @@ interface AppContextType {
   registerRetailer: (data: RetailerRegisterData) => Promise<{ success: boolean; message?: string }>;
   loginRetailer: (credentials: RetailerCredentials) => Promise<boolean>;
   loginFactory: (credentials: FactoryCredentials) => Promise<boolean>;
+  loginAdmin: (credentials: { email: string; password: string }) => Promise<boolean>;
   resetPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   setAuthMode: (mode: AuthMode) => void;
   authMode: AuthMode;
@@ -195,6 +196,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           .maybeSingle();
 
         if (profile && profile.is_active) {
+          const isAdmin = profile.role === 'factory_admin';
           setCurrentUser({
             id: profile.id,
             name: profile.full_name || userObj.email?.split('@')[0] || 'Factory Member',
@@ -203,7 +205,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             place: '',
             pincode: '',
             passwordHash: '',
-            role: 'factory',
+            role: isAdmin ? 'admin' : 'factory',
+            factoryRole: profile.role,
             authenticatedAt: new Date().toISOString(),
           });
         } else {
@@ -288,6 +291,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           invoiceQuery = invoiceQuery.or(`retailer_id.eq.${currentUser.id},user_id.eq.${currentUser.id}`);
           retailerQuery = retailerQuery.eq('id', currentUser.id);
         }
+        // factory and admin: no extra filter — RLS on backend allows full read
 
         const [orderRes, invRes, retRes] = await Promise.all([
           orderQuery,
@@ -609,6 +613,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Factory Admin Login
+  const loginAdmin = async (credentials: { email: string; password: string }): Promise<boolean> => {
+    const normalizedEmail = credentials.email.trim().toLowerCase();
+    const password = credentials.password || '';
+
+    if (!normalizedEmail || !password) {
+      showToast('Please enter your admin email and password.', 'error');
+      return false;
+    }
+
+    if (!supabase || !isSupabaseConfigured) {
+      showToast('Admin login is unavailable — Supabase is not configured.', 'error');
+      return false;
+    }
+
+    try {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+
+      if (signInError || !signInData.user) {
+        await supabase.auth.signOut();
+        showToast(signInError?.message || 'Invalid admin credentials.', 'error');
+        return false;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('factory_members')
+        .select('*')
+        .eq('id', signInData.user.id)
+        .eq('role', 'factory_admin')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (profileError || !profile) {
+        await supabase.auth.signOut();
+        showToast('This account does not have Factory Admin privileges.', 'error');
+        return false;
+      }
+
+      const user: AuthUser = {
+        id: profile.id,
+        name: profile.full_name || normalizedEmail.split('@')[0],
+        email: profile.email || normalizedEmail,
+        phone: '',
+        place: '',
+        pincode: '',
+        passwordHash: '',
+        role: 'admin',
+        factoryRole: 'factory_admin',
+        isNewRetailer: false,
+        authenticatedAt: new Date().toISOString(),
+      };
+
+      setCurrentUser(user);
+      setAuthView(null);
+      setCurrentView('admin');
+      showToast(`Welcome, Admin ${user.name}!`, 'success');
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unexpected admin login error.';
+      showToast(message, 'error');
+      return false;
+    }
+  };
+
   // Password Reset
   const resetPassword = async (email: string): Promise<{ success: boolean; message: string }> => {
     if (!supabase) {
@@ -894,6 +965,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         registerRetailer,
         loginRetailer,
         loginFactory,
+        loginAdmin,
         resetPassword,
         setAuthMode,
         authMode,

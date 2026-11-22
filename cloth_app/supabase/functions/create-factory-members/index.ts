@@ -122,6 +122,9 @@ Deno.serve(async (req) => {
   for (const member of membersToProcess) {
     const email = normalizeEmail(member.email);
     const fullName = member.full_name || member.name || email.split('@')[0];
+    const role = member.role && ['factory_member', 'factory_staff', 'factory_admin'].includes(member.role)
+      ? member.role
+      : 'factory_staff';
 
     try {
       let authUser = await findAuthUser(adminClient, email);
@@ -133,7 +136,7 @@ Deno.serve(async (req) => {
           email_confirm: true,
           user_metadata: {
             full_name: fullName,
-            role: 'factory_member',
+            role,
             password_reset_required: true,
           },
         });
@@ -153,7 +156,7 @@ Deno.serve(async (req) => {
       if (profileByEmail) {
         const { error: updateError } = await adminClient
           .from('factory_members')
-          .update({ full_name: fullName, role: 'factory_member', is_active: true })
+          .update({ full_name: fullName, role, is_active: true })
           .eq('id', authUser.id);
         if (updateError) throw updateError;
 
@@ -163,7 +166,7 @@ Deno.serve(async (req) => {
           id: authUser.id,
           email,
           full_name: fullName,
-          role: 'factory_member',
+          role,
           is_active: true,
         });
         if (insertError) throw insertError;
