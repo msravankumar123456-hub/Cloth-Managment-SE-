@@ -11,6 +11,7 @@ import {
 import { InvoicesView } from '../retailer/InvoicesView';
 import { OrderTrackingModal } from '../retailer/OrderTrackingModal';
 import { RetailerDetailModal } from './RetailerDetailModal';
+import { AdminOrderDetailModal } from './AdminOrderDetailModal';
 import { FactoryStaff, ActivityLog, Retailer } from '../../types';
 
 // ─────────────────────────── types ───────────────────────────────────────────
@@ -70,6 +71,7 @@ export const AdminPortal: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedRetailer, setSelectedRetailer] = useState<Retailer | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   // DB-fetched data exclusive to admin
   const [staffList,  setStaffList]  = useState<FactoryStaff[]>([]);
@@ -359,7 +361,13 @@ export const AdminPortal: React.FC = () => {
 
             {/* ── Orders ── */}
             {activeTab === 'orders' && (
-              <AdminOrdersSection orders={orders} updateOrderStatus={updateOrderStatus} setTrackingOrder={setTrackingOrder} showToast={showToast} />
+              <AdminOrdersSection
+                orders={orders}
+                updateOrderStatus={updateOrderStatus}
+                setTrackingOrder={setTrackingOrder}
+                setOrderDetails={setSelectedOrder}
+                showToast={showToast}
+              />
             )}
 
             {/* ── Invoices ── */}
@@ -758,6 +766,10 @@ export const AdminPortal: React.FC = () => {
         onClose={() => setSelectedRetailer(null)}
         onRemoveRetailer={removeRetailer}
       />
+      <AdminOrderDetailModal
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+      />
     </div>
   );
 };
@@ -1095,8 +1107,9 @@ const AdminOrdersSection: React.FC<{
   orders: any[];
   updateOrderStatus: (id: string, status: any) => Promise<void>;
   setTrackingOrder: (o: any) => void;
+  setOrderDetails: (o: any) => void;
   showToast: (m: string, t?: any) => void;
-}> = ({ orders, updateOrderStatus, setTrackingOrder, showToast }) => {
+}> = ({ orders, updateOrderStatus, setTrackingOrder, setOrderDetails, showToast }) => {
   const [search, setSearch] = useState('');
   const statuses = ['Pending','Confirmed','In Production','Quality Check','Dispatched','Out for Delivery','Delivered'];
 
@@ -1147,8 +1160,24 @@ const AdminOrdersSection: React.FC<{
           <tbody className="divide-y divide-white/[0.04]">
             {filtered.map(o => (
               <tr key={o.id} className="hover:bg-white/[0.02]">
-                <td className="py-3 px-4 font-mono font-bold text-white">{o.orderNumber}</td>
-                <td className="py-3 px-4 text-[#A1A1AA]">{o.retailerStore}</td>
+                <td className="py-3 px-4 font-mono font-bold text-white">
+                  <button
+                    onClick={() => setOrderDetails(o)}
+                    className="hover:text-[#FF7135] transition-colors cursor-pointer"
+                    title="View order details"
+                  >
+                    {o.orderNumber}
+                  </button>
+                </td>
+                <td className="py-3 px-4">
+                  <button
+                    onClick={() => setOrderDetails(o)}
+                    className="text-left text-[#A1A1AA] hover:text-[#FF7135] hover:underline transition-colors cursor-pointer"
+                    title="View full order details with product photos"
+                  >
+                    {o.retailerStore}
+                  </button>
+                </td>
                 <td className="py-3 px-4 text-[#71717A]">{o.date}</td>
                 <td className="py-3 px-4 text-right font-mono text-[#FF7135] font-bold">₹{o.grandTotal?.toLocaleString()}</td>
                 <td className="py-3 px-4 text-center">
