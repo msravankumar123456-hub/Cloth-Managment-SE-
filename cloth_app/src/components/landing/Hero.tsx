@@ -89,48 +89,48 @@ export const Hero: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-[#101114]/40 via-transparent to-black/20" />
 
                 {/* Integrated bottom garment label */}
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-3 rounded-xl bg-[#101114]/80 backdrop-blur-md border border-white/10">
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-3 rounded-xl bg-white/95 backdrop-blur-md border border-white/50 shadow-lg shadow-black/10">
                   <div className="flex items-center gap-2.5">
                     <div className="w-2 h-2 rounded-full bg-[#FF7135]" />
-                    <span className="text-xs font-medium text-white">Autumn/Winter 2026 Ready</span>
+                    <span className="text-xs font-semibold text-[#101114]">Autumn/Winter 2026 Ready</span>
                   </div>
-                  <span className="text-[11px] font-mono text-[#A1A1AA]">Factory Lot: TB-FW26</span>
+                  <span className="text-[11px] font-mono text-[#71717A]">Factory Lot: TB-FW26</span>
                 </div>
               </div>
 
               {/* Floating Badge 1: New Collection Available */}
-              <div className="absolute -top-4 -left-4 sm:-left-6 p-2.5 px-3.5 rounded-xl bg-[#17181C]/90 backdrop-blur-xl border border-white/15 shadow-xl shadow-black/60 flex items-center gap-2.5 animate-float-slow select-none">
-                <div className="w-6 h-6 rounded-lg bg-[#FF7135]/15 border border-[#FF7135]/30 flex items-center justify-center text-[#FF7135]">
+              <div className="absolute -top-4 -left-4 sm:-left-6 p-2.5 px-3.5 rounded-xl bg-white/95 backdrop-blur-xl border border-[#FF7135]/25 shadow-xl shadow-[#FF7135]/15 flex items-center gap-2.5 animate-float-slow select-none">
+                <div className="w-6 h-6 rounded-lg bg-[#FF7135]/10 border border-[#FF7135]/25 flex items-center justify-center text-[#FF7135]">
                   <Sparkles className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <div className="text-[10px] text-[#A1A1AA] uppercase tracking-wider font-semibold">Catalogue Update</div>
-                  <div className="text-xs font-semibold text-white">New Collection Available</div>
+                  <div className="text-[10px] text-[#71717A] uppercase tracking-wider font-semibold">Catalogue Update</div>
+                  <div className="text-xs font-bold text-[#101114]">New Collection Available</div>
                 </div>
               </div>
 
               {/* Floating Badge 2: Stock Updated Live */}
-              <div className="absolute top-1/2 -right-4 sm:-right-6 -translate-y-1/2 p-2.5 px-3.5 rounded-xl bg-[#17181C]/90 backdrop-blur-xl border border-white/15 shadow-xl shadow-black/60 flex items-center gap-2.5 animate-float-delayed select-none">
-                <div className="w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <div className="absolute top-1/2 -right-4 sm:-right-6 -translate-y-1/2 p-2.5 px-3.5 rounded-xl bg-white/95 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/10 flex items-center gap-2.5 animate-float-delayed select-none">
+                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-600">
                   <CheckCircle className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <div className="text-[10px] text-[#A1A1AA] uppercase tracking-wider font-semibold">Tirupur Mill</div>
-                  <div className="text-xs font-semibold text-white">Stock Updated Live</div>
+                  <div className="text-[10px] text-[#71717A] uppercase tracking-wider font-semibold">Tirupur Mill</div>
+                  <div className="text-xs font-bold text-[#101114]">Stock Updated Live</div>
                 </div>
               </div>
 
               {/* Floating Badge 3: Wholesale Pricing Pill */}
-              <div className="absolute -bottom-5 left-8 p-3 rounded-xl bg-[#17181C]/95 backdrop-blur-xl border border-white/15 shadow-xl shadow-black/60 flex items-center gap-3 select-none">
+              <div className="absolute -bottom-5 left-8 p-3 rounded-xl bg-white/95 backdrop-blur-xl border border-[#FF7135]/25 shadow-xl shadow-[#FF7135]/15 flex items-center gap-3 select-none">
                 <div className="w-8 h-8 rounded-lg bg-[#FF7135] text-white flex items-center justify-center font-bold text-xs shadow-md shadow-[#FF7135]/30">
                   ₹
                 </div>
                 <div>
-                  <div className="text-[10px] text-[#A1A1AA] uppercase tracking-wider font-semibold">Direct Mills</div>
-                  <div className="text-sm font-bold text-white flex items-baseline gap-1">
+                  <div className="text-[10px] text-[#71717A] uppercase tracking-wider font-semibold">Direct Mills</div>
+                  <div className="text-sm font-bold text-[#101114] flex items-baseline gap-1">
                     <span>Wholesale from</span>
                     <span className="text-[#FF7135]">₹180</span>
-                    <span className="text-[10px] text-[#A1A1AA] font-normal">/piece</span>
+                    <span className="text-[10px] text-[#71717A] font-normal">/piece</span>
                   </div>
                 </div>
               </div>
