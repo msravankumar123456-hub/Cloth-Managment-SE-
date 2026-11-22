@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { AboutContact } from './AboutContact';
 import {
   Search, Heart, User, ShoppingBag, ChevronDown, ArrowRight,
   Menu, X, ShieldCheck, Store, Factory, Grid2X2
@@ -85,7 +86,7 @@ const AnnouncementBar: React.FC = () => {
 };
 
 const FashionHeader: React.FC<{ search: string; onSearch: (v: string) => void }> = ({ search, onSearch }) => {
-  const { cart, setIsCartOpen, setCurrentView, isAuthenticated } = useApp();
+  const { cart, setIsCartOpen, setCurrentView, isAuthenticated, currentView: currentViewRef } = useApp();
   const [portalOpen, setPortalOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const cartCount = cart.reduce((s, i) => s + i.totalQuantity, 0);
@@ -94,6 +95,16 @@ const FashionHeader: React.FC<{ search: string; onSearch: (v: string) => void }>
     setMobileOpen(false);
     setPortalOpen(false);
     setCurrentView(view);
+  };
+
+  const scrollTo = (id: string) => {
+    setMobileOpen(false);
+    setPortalOpen(false);
+    if (currentViewRef !== 'landing') setCurrentView('landing');
+    window.setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, currentViewRef !== 'landing' ? 120 : 0);
   };
 
   return (
@@ -107,8 +118,8 @@ const FashionHeader: React.FC<{ search: string; onSearch: (v: string) => void }>
 
         <nav className="hidden items-center gap-8 lg:flex">
           <button onClick={() => go('landing')} className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#0B0B0D] hover:text-[#E11D2E] transition-colors">Discover</button>
-          <button onClick={() => go('retailer')} className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#5B5B62] hover:text-[#E11D2E] transition-colors">Retailer Portal</button>
-          <button onClick={() => go('factory')} className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#5B5B62] hover:text-[#E11D2E] transition-colors">Factory Portal</button>
+          <button onClick={() => scrollTo('collection-grid')} className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#5B5B62] hover:text-[#E11D2E] transition-colors">Collections</button>
+          <button onClick={() => scrollTo('about-contact')} className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#5B5B62] hover:text-[#E11D2E] transition-colors">About</button>
 
           <div className="relative">
             <button
@@ -163,13 +174,21 @@ const FashionHeader: React.FC<{ search: string; onSearch: (v: string) => void }>
 
       {mobileOpen && (
         <div className="border-t border-black/[0.06] bg-white px-5 py-4 lg:hidden">
-          {[
-            { label: 'Discover', view: 'landing' as const },
-            { label: 'Retailer Portal', view: 'retailer' as const },
-            { label: 'Factory Portal', view: 'factory' as const },
-            { label: 'Admin Login', view: 'admin-auth' as const },
-          ].map(item => (
-            <button key={item.label} onClick={() => go(item.view)} className="block w-full border-b border-black/[0.05] py-3 text-left text-[13px] font-semibold uppercase tracking-wider text-[#0B0B0D]">
+          {([
+            { label: 'Discover', view: 'landing' },
+            { label: 'Collections', scrollId: 'collection-grid' },
+            { label: 'About', scrollId: 'about-contact' },
+            { label: 'Retailer Portal', view: 'retailer' },
+            { label: 'Admin Login', view: 'admin-auth' },
+          ] as { label: string; view?: 'landing' | 'retailer' | 'admin-auth'; scrollId?: string }[]).map(item => (
+            <button
+              key={item.label}
+              onClick={() => {
+                if (item.scrollId) scrollTo(item.scrollId);
+                else if (item.view) go(item.view);
+              }}
+              className="block w-full border-b border-black/[0.05] py-3 text-left text-[13px] font-semibold uppercase tracking-wider text-[#0B0B0D]"
+            >
               {item.label}
             </button>
           ))}
@@ -400,6 +419,9 @@ export const FashionLanding: React.FC = () => {
       <CategoryNav value={nav} onChange={selectNav} />
       <AnimatedHero active={heroIndex} onSelect={setHeroIndex} />
       <FashionGrid category={nav} search={search} />
+      <div className="scroll-mt-[130px]">
+        <AboutContact />
+      </div>
       <FashionFooter />
     </div>
   );
