@@ -115,11 +115,7 @@ export const App: React.FC = () => {
               <Hero />
               <TrustStrip />
               <FeaturedCollection />
-              <AppPreviewSection />
-              <FactoryShowcase />
-              <BentoBenefits />
               <AccessPortals />
-              <AboutContact />
               <Footer />
 
               {/* Modals triggered from landing page */}

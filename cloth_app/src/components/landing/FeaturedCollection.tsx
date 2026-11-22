@@ -1,31 +1,39 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ArrowRight, Eye, Sparkles, ShoppingBag, Layers, Flame } from 'lucide-react';
+import { ArrowRight, Eye, Sparkles, ShoppingBag, Layers, Flame, Search } from 'lucide-react';
 import { Product, ClothingCategory } from '../../types';
 
 export const FeaturedCollection: React.FC = () => {
   const { products, setSelectedProductForDetail, setCurrentView } = useApp();
-  const [activeTab, setActiveTab] = useState<'All' | 'Sarees' | 'Dresses' | 'Shirts' | 'Kurtis' | 'Denim'>('All');
+  const [activeTab, setActiveTab] = useState<ClothingCategory | 'All'>('All');
+  const [search, setSearch] = useState('');
 
-  // Filter products based on active collection exploration tab
+  // Filter products based on active collection exploration tab and search
   const displayedProducts = React.useMemo(() => {
-    if (activeTab === 'All') {
-      return products.slice(0, 8);
-    }
-    return products.filter(p => p.category === activeTab);
-  }, [products, activeTab]);
+    return products.filter(p => {
+      const matchCat = activeTab === 'All' || p.category === activeTab;
+      const matchSearch = !search || 
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.fabric.toLowerCase().includes(search.toLowerCase()) ||
+        p.tags.some(t => t.toLowerCase().includes(search.toLowerCase()));
+      return matchCat && matchSearch;
+    });
+  }, [products, activeTab, search]);
 
   const handleProductClick = (product: Product) => {
     setSelectedProductForDetail(product);
   };
 
-  const tabs: { id: 'All' | 'Sarees' | 'Dresses' | 'Shirts' | 'Kurtis' | 'Denim'; label: string; icon?: string }[] = [
+  const tabs: { id: ClothingCategory | 'All'; label: string; icon?: string }[] = [
     { id: 'All', label: 'All Collections' },
-    { id: 'Sarees', label: '🥻 Sarees Collection' },
-    { id: 'Dresses', label: '👗 Dresses Collection' },
-    { id: 'Shirts', label: '👔 Formal & Casual' },
-    { id: 'Kurtis', label: '👚 Designer Kurtis' },
-    { id: 'Denim', label: '👖 Denim & Jeans' },
+    { id: 'Sarees', label: '🥻 Sarees' },
+    { id: 'Dresses', label: '👗 Dresses' },
+    { id: 'Shirts', label: '👔 Shirts' },
+    { id: 'T-Shirts', label: '👕 T-Shirts' },
+    { id: 'Denim', label: '👖 Denim' },
+    { id: 'Kurtis', label: '👚 Kurtis' },
+    { id: 'Trousers', label: '👖 Trousers' },
+    { id: 'Blazers', label: '🧥 Blazers' },
   ];
 
   return (
@@ -61,21 +69,47 @@ export const FeaturedCollection: React.FC = () => {
           </div>
         </div>
 
+        {/* Search Bar & Collection Exploration Tabs */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717A]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search all garments, fabrics, styles..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#17181C] border border-white/10 text-white placeholder-[#71717A] text-xs focus:outline-none focus:border-[#FF7135]/50 transition-colors"
+            />
+          </div>
+          <div className="text-xs text-[#A1A1AA] font-mono">
+            Showing <strong className="text-white">{displayedProducts.length}</strong> of {products.length} garments
+          </div>
+        </div>
+
         {/* Collection Exploration Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
+            const count = tab.id === 'All' 
+              ? products.length 
+              : products.filter(p => p.category === tab.id).length;
+
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5 ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5 ${
                   isActive
                     ? 'bg-[#FF7135] border-[#FF7135] text-white shadow-lg shadow-[#FF7135]/30 ring-2 ring-[#FF7135]/20'
                     : 'bg-[#17181C] border-white/10 text-[#A1A1AA] hover:text-white hover:border-white/20'
                 }`}
               >
                 <span>{tab.label}</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                  isActive ? 'bg-black/30 text-white' : 'bg-white/10 text-[#A1A1AA]'
+                }`}>
+                  {count}
+                </span>
                 {tab.id === 'Sarees' && (
                   <span className="px-1.5 py-0.2 rounded bg-amber-400 text-black font-mono text-[9px] font-black uppercase ml-1">
                     NEW

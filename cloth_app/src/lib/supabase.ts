@@ -24,9 +24,20 @@ export const supabase = isSupabaseConfigured
 
 // Product Mapper (Supabase snake_case <-> App camelCase)
 export const mapDbProductToApp = (db: any): Product => {
-  const resolvedImage = (db.id === 'prod-3' || (typeof db.image === 'string' && db.image.includes('1542272604-780c96856592')))
-    ? '/images/pants/classic-indigo-jeans.jpg'
-    : db.image;
+  let resolvedImage = db.image;
+  if (db.id === 'prod-3' || (typeof db.image === 'string' && db.image.includes('1542272604-780c96856592'))) {
+    resolvedImage = '/images/pants/classic-indigo-jeans.jpg';
+  } else if (db.id === 'prod-2' || (typeof db.image === 'string' && db.image.includes('1521572267360-ee0c2909d518'))) {
+    resolvedImage = '/images/tshirts/premium-cotton-tee.jpg';
+  }
+
+  const resolveImageStr = (img: string) => {
+    if (typeof img === 'string') {
+      if (img.includes('1542272604-780c96856592')) return '/images/pants/classic-indigo-jeans.jpg';
+      if (img.includes('1521572267360-ee0c2909d518')) return '/images/tshirts/premium-cotton-tee.jpg';
+    }
+    return img;
+  };
   return {
     id: db.id,
     name: db.name,
@@ -38,7 +49,7 @@ export const mapDbProductToApp = (db: any): Product => {
     moq: db.moq || 30,
     image: resolvedImage,
     images: Array.isArray(db.images) && db.images.length > 0 
-      ? db.images.map((img: string) => (typeof img === 'string' && img.includes('1542272604-780c96856592')) ? '/images/pants/classic-indigo-jeans.jpg' : img)
+      ? db.images.map(resolveImageStr)
       : [resolvedImage],
   stock: {
     S: db.stock_s ?? 0,

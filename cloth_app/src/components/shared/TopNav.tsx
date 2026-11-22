@@ -104,19 +104,19 @@ export const TopNav: React.FC = () => {
               onClick={() => handleNavClick('collections')} 
               className="hover:text-white transition-colors cursor-pointer"
             >
-              Collections
+              All Garments
             </button>
             <button 
-              onClick={() => handleNavClick('bento-benefits')} 
+              onClick={() => setCurrentView('retailer')} 
               className="hover:text-white transition-colors cursor-pointer"
             >
-              For Retailers
+              Retailer Portal
             </button>
             <button 
-              onClick={() => handleNavClick('about-contact')} 
+              onClick={() => setCurrentView('factory')} 
               className="hover:text-white transition-colors cursor-pointer"
             >
-              About
+              Factory Portal
             </button>
           </nav>
 
