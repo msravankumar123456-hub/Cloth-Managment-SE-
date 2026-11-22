@@ -26,7 +26,7 @@ export const TrustStrip: React.FC = () => {
   ];
 
   return (
-    <section className="relative z-20 border-y border-white/[0.08] bg-[#141519]/80 backdrop-blur-md py-6">
+    <section className="force-white relative z-20 border-y border-white/[0.08] bg-[#141519]/80 backdrop-blur-md py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
           {benefits.map((b, idx) => (

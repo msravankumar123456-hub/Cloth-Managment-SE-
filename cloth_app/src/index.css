@@ -154,6 +154,12 @@ html.light .text-\[\#F5F5F5\] {
   color: #0F172A !important;
 }
 
+/* Keep labels on dark badge/strip surfaces white even in light theme */
+html.light .force-white,
+html.light .force-white * {
+  color: #FFFFFF !important;
+}
+
 html.light .text-\[\#D4D4D8\],
 html.light .text-\[\#A1A1AA\] {
   color: #475569 !important;
