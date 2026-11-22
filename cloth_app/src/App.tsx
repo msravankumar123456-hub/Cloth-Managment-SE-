@@ -45,7 +45,8 @@ export const App: React.FC = () => {
     trackingOrder, 
     setTrackingOrder,
     activeInvoice, 
-    setActiveInvoice 
+    setActiveInvoice,
+    isAuthenticated 
   } = useApp();
 
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
@@ -66,7 +67,11 @@ export const App: React.FC = () => {
               onBack={() => setSelectedProductForDetail(null)}
               onBuyNow={() => {
                 setSelectedProductForDetail(null);
-                setIsCheckoutOpen(true);
+                if (!isAuthenticated) {
+                  setCurrentView('retailer-auth');
+                } else {
+                  setIsCheckoutOpen(true);
+                }
               }}
             />
 

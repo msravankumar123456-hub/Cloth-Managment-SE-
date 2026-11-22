@@ -4,7 +4,7 @@ import { ArrowRight, Eye, Sparkles, ShoppingBag, Layers, Flame, Search } from 'l
 import { Product, ClothingCategory } from '../../types';
 
 export const FeaturedCollection: React.FC = () => {
-  const { products, setSelectedProductForDetail, setCurrentView } = useApp();
+  const { products, setSelectedProductForDetail, setCurrentView, isAuthenticated } = useApp();
   const [activeTab, setActiveTab] = useState<ClothingCategory | 'All'>('All');
   const [search, setSearch] = useState('');
 
@@ -60,10 +60,16 @@ export const FeaturedCollection: React.FC = () => {
 
           <div className="mt-6 md:mt-0">
             <button
-              onClick={() => setCurrentView('retailer')}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  setCurrentView('retailer-auth');
+                } else {
+                  setCurrentView('retailer');
+                }
+              }}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-[#FF7135] text-white text-xs font-bold uppercase tracking-wider transition-all duration-200 border border-white/10 hover:border-[#FF7135] group cursor-pointer shadow-lg shadow-black/40"
             >
-              <span>Explore Entire Catalogue</span>
+              <span>{isAuthenticated ? 'Explore Entire Catalogue' : 'Sign In to Order Wholesale'}</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
             </button>
           </div>

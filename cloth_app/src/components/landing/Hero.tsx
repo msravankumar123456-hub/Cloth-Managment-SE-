@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles, CheckCircle, Package, TrendingUp } from 'lucide-r
 import { GlowOrb } from '../shared/GlowOrb';
 
 export const Hero: React.FC = () => {
-  const { setCurrentView } = useApp();
+  const { setCurrentView, isAuthenticated } = useApp();
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -46,7 +46,13 @@ export const Hero: React.FC = () => {
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full sm:w-auto mb-8">
               <button
-                onClick={() => setCurrentView('retailer')}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setCurrentView('retailer-auth');
+                  } else {
+                    setCurrentView('retailer');
+                  }
+                }}
                 className="group flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#FF7135] hover:bg-[#FF5C1B] text-white font-medium text-sm transition-all duration-200 shadow-xl shadow-[#FF7135]/25 hover:shadow-[#FF7135]/40 hover:-translate-y-0.5 cursor-pointer"
               >
                 <span>Explore Collection</span>

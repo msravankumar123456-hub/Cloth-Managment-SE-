@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 
 export const Footer: React.FC = () => {
-  const { setCurrentView } = useApp();
+  const { setCurrentView, isAuthenticated } = useApp();
 
   const scrollTo = (id: string) => {
     setCurrentView('landing');
@@ -44,12 +44,30 @@ export const Footer: React.FC = () => {
             <div className="text-xs font-mono uppercase text-white font-semibold">Wholesale Platform</div>
             <ul className="space-y-2 text-[#A1A1AA]">
               <li>
-                <button onClick={() => setCurrentView('retailer')} className="hover:text-[#FF7135] transition-colors cursor-pointer">
+                <button 
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      setCurrentView('retailer-auth');
+                    } else {
+                      setCurrentView('retailer');
+                    }
+                  }} 
+                  className="hover:text-[#FF7135] transition-colors cursor-pointer"
+                >
                   Explore Collection
                 </button>
               </li>
               <li>
-                <button onClick={() => setCurrentView('retailer')} className="hover:text-[#FF7135] transition-colors cursor-pointer">
+                <button 
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      setCurrentView('retailer-auth');
+                    } else {
+                      setCurrentView('retailer');
+                    }
+                  }} 
+                  className="hover:text-[#FF7135] transition-colors cursor-pointer"
+                >
                   Retailer Portal
                 </button>
               </li>

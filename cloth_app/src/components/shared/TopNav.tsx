@@ -184,10 +184,16 @@ export const TopNav: React.FC = () => {
 
             {/* Primary Orange CTA */}
             <button
-              onClick={() => setCurrentView('retailer')}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  setCurrentView('retailer-auth');
+                } else {
+                  setCurrentView('retailer');
+                }
+              }}
               className="group flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FF7135] hover:bg-[#FF5C1B] text-white font-medium text-sm transition-all duration-200 shadow-lg shadow-[#FF7135]/25 hover:shadow-[#FF7135]/40 hover:-translate-y-0.5"
             >
-              <span>Explore Collection</span>
+              <span>{isAuthenticated ? 'Retailer Portal' : 'Explore Collection'}</span>
               <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
 
@@ -313,10 +319,17 @@ export const TopNav: React.FC = () => {
                 Admin Login
               </button>
               <button
-                onClick={() => { setCurrentView('retailer'); setMobileMenuOpen(false); }}
+                onClick={() => { 
+                  if (!isAuthenticated) {
+                    setCurrentView('retailer-auth');
+                  } else {
+                    setCurrentView('retailer');
+                  }
+                  setMobileMenuOpen(false); 
+                }}
                 className="w-full py-2.5 rounded-xl bg-[#FF7135] text-white text-center font-medium shadow-md shadow-[#FF7135]/30"
               >
-                Explore Collection →
+                {isAuthenticated ? 'Retailer Portal →' : 'Sign In to Explore Collection →'}
               </button>
               <button
                 onClick={() => { setCurrentView('factory'); setMobileMenuOpen(false); }}
